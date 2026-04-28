@@ -107,7 +107,7 @@
       <a class="nav-link" href="teams.html">Teams</a>
       <a class="nav-link" href="schedule.html">Schedule/Results</a>
       <a class="nav-link" href="stats.html">Stats</a>
-      <a class="nav-link active" href="awards.html">🏆 Awards</a>
+      <a class="nav-link active" href="awards.html"><span style="display:inline-flex;align-items:center;gap:4px;">🏆 Awards</span></a>
       <a class="nav-link" href="handouts.html">Handouts</a>
       <a class="nav-link" href="registration.html">Registration</a>
       <a class="nav-link" href="contact.html">Contact</a>
@@ -203,35 +203,54 @@ function buildRegularAwards(data) {
     );
   }
 
-  // 2. Maurice "Rocket" Richard Trophy — Most goals
-  const topGoals = [...skaters].sort((a,b) => b.G - a.G || b.PTS - a.PTS)[0];
-  if (topGoals) {
+  // Helper: render one or more winners
+  function winnersHtml(winners, statLine) {
+    if (winners.length === 1) {
+      const p = winners[0];
+      return {
+        winner: `${teamDotHtml(p.Team)}${playerLink(p.Name, p.Team)}`,
+        sub: statLine(p)
+      };
+    }
+    // Multiple tied winners
+    const winnerStr = winners.map(p =>
+      `<div style="margin-bottom:4px;">${teamDotHtml(p.Team)}${playerLink(p.Name, p.Team)}<span style="font-size:13px;color:var(--text-muted);margin-left:6px;">${statLine(p)}</span></div>`
+    ).join('');
+    return { winner: winnerStr, sub: 'Tied award — shared by ' + winners.length + ' players' };
+  }
+
+  // 2. Maurice "Rocket" Richard Trophy — Most goals (ties shared)
+  const sortedGoals = [...skaters].sort((a,b) => b.G - a.G || b.PTS - a.PTS);
+  const topGoalsVal = sortedGoals[0]?.G || 0;
+  const topGoalsWinners = sortedGoals.filter(p => p.G === topGoalsVal && topGoalsVal > 0);
+  if (topGoalsWinners.length) {
+    const w = winnersHtml(topGoalsWinners, p => `${p.G}G · ${p.PTS} pts · ${p.Team}`);
     html += awardCard('🎯', 'Maurice "Rocket" Richard Trophy',
-      'Awarded to the player with the most goals in the regular season.',
-      `${teamDotHtml(topGoals.Team)}${playerLink(topGoals.Name, topGoals.Team)}`,
-      `${topGoals.G} goals · ${topGoals.PTS} pts · ${topGoals.Team}`
-    );
+      'Awarded to the player(s) with the most goals in the regular season.',
+      w.winner, w.sub);
   }
 
-  // 3. Art Ross Trophy — Most points
-  const topPts = [...skaters].sort((a,b) => b.PTS - a.PTS || b.G - a.G)[0];
-  if (topPts) {
+  // 3. Art Ross Trophy — Most points (ties shared)
+  const sortedPts = [...skaters].sort((a,b) => b.PTS - a.PTS || b.G - a.G);
+  const topPtsVal = sortedPts[0]?.PTS || 0;
+  const topPtsWinners = sortedPts.filter(p => p.PTS === topPtsVal && topPtsVal > 0);
+  if (topPtsWinners.length) {
+    const w = winnersHtml(topPtsWinners, p => `${p.PTS} pts (${p.G}G + ${p.A}A) · ${p.Team}`);
     html += awardCard('📊', 'Art Ross Trophy',
-      'Awarded to the player with the most points in the regular season.',
-      `${teamDotHtml(topPts.Team)}${playerLink(topPts.Name, topPts.Team)}`,
-      `${topPts.PTS} pts (${topPts.G}G + ${topPts.A}A) · ${topPts.Team}`
-    );
+      'Awarded to the player(s) with the most points in the regular season.',
+      w.winner, w.sub);
   }
 
-  // 4. James Norris Memorial Trophy — Defenceman with most points
+  // 4. James Norris Memorial Trophy — Defenceman with most points (ties shared)
   const defencemen = skaters.filter(p => p.Pos === 'D');
-  const topDef = [...defencemen].sort((a,b) => b.PTS - a.PTS || b.G - a.G)[0];
-  if (topDef) {
+  const sortedDef = [...defencemen].sort((a,b) => b.PTS - a.PTS || b.G - a.G);
+  const topDefVal = sortedDef[0]?.PTS || 0;
+  const topDefWinners = sortedDef.filter(p => p.PTS === topDefVal && topDefVal > 0);
+  if (topDefWinners.length) {
+    const w = winnersHtml(topDefWinners, p => `${p.PTS} pts (${p.G}G + ${p.A}A) · Defence · ${p.Team}`);
     html += awardCard('🛡️', 'James Norris Memorial Trophy',
-      'Awarded to the defenceman with the most points in the regular season.',
-      `${teamDotHtml(topDef.Team)}${playerLink(topDef.Name, topDef.Team)}`,
-      `${topDef.PTS} pts (${topDef.G}G + ${topDef.A}A) · Defence · ${topDef.Team}`
-    );
+      'Awarded to the defenceman(s) with the most points in the regular season.',
+      w.winner, w.sub);
   } else {
     html += awardCard('🛡️', 'James Norris Memorial Trophy',
       'Awarded to the defenceman with the most points in the regular season.',
@@ -320,12 +339,18 @@ async function buildPlayoffAwards(data, rrData) {
   // 2. Conn Smythe — Most playoff points
   const playoffSkaters = aggregateSkaters(roster, gameStats, schedule, 'playoff');
   const connSmythe = [...playoffSkaters].sort((a,b) => b.PTS - a.PTS || b.G - a.G)[0];
-  if (connSmythe && connSmythe.PTS > 0) {
+  const sortedConn = [...playoffSkaters].sort((a,b) => b.PTS - a.PTS || b.G - a.G);
+  const connVal = sortedConn[0]?.PTS || 0;
+  const connWinners = sortedConn.filter(p => p.PTS === connVal && connVal > 0);
+  if (connWinners.length) {
+    function connStatLine(p) { return `${p.PTS} playoff pts (${p.G}G + ${p.A}A) · ${p.Team}`; }
+    const w = connWinners.length === 1
+      ? { winner: `${teamDotHtml(connWinners[0].Team)}${playerLink(connWinners[0].Name, connWinners[0].Team)}`, sub: connStatLine(connWinners[0]) }
+      : { winner: connWinners.map(p => `<div style="margin-bottom:4px;">${teamDotHtml(p.Team)}${playerLink(p.Name, p.Team)}<span style="font-size:13px;color:var(--text-muted);margin-left:6px;">${connStatLine(p)}</span></div>`).join(''),
+          sub: 'Tied award — shared by ' + connWinners.length + ' players' };
     html += awardCard('🌟', 'Conn Smythe Trophy',
       'Awarded to the most valuable player of the playoffs, based on playoff points.',
-      `${teamDotHtml(connSmythe.Team)}${playerLink(connSmythe.Name, connSmythe.Team)}`,
-      `${connSmythe.PTS} playoff pts (${connSmythe.G}G + ${connSmythe.A}A) · ${connSmythe.Team}`
-    );
+      w.winner, w.sub);
   } else {
     html += awardCard('🌟', 'Conn Smythe Trophy',
       'Awarded to the most valuable player of the playoffs.',

@@ -105,7 +105,7 @@
       <a class="nav-link" href="teams.html">Teams</a>
       <a class="nav-link" href="schedule.html">Schedule/Results</a>
       <a class="nav-link" href="stats.html">Stats</a>
-      <a class="nav-link" id="awards-nav-link" href="awards.html" style="display:none;">🏆 Awards</a>
+      <a class="nav-link" id="awards-nav-link" href="awards.html" style="display:none;"><span style="display:inline-flex;align-items:center;gap:4px;">🏆 Awards</span></a>
       <a class="nav-link" href="handouts.html">Handouts</a>
       <a class="nav-link" href="registration.html">Registration</a>
       <a class="nav-link" href="contact.html">Contact</a>
@@ -387,6 +387,21 @@ init();
     const label = s + ' Season';
     document.querySelectorAll('.season-label').forEach(el => el.textContent = label);
   });
+
+  // Show Awards nav link when regular season is complete and registration not yet open
+  (async () => {
+    try {
+      const data = await loadData();
+      const regWin = await fetchRegistrationWindow();
+      const today = new Date(); today.setHours(0,0,0,0);
+      const regStart = regWin && regWin.StartDate ? new Date(regWin.StartDate + 'T00:00:00') : null;
+      const regOpen = regStart && today >= regStart;
+      const regularGames = data.schedule.filter(g => Number(g.Playoff||0) === 0);
+      const regularDone = regularGames.length > 0 && regularGames.every(g => g.Status !== 'Upcoming');
+      const link = document.getElementById('awards-nav-link');
+      if (link && regularDone && !regOpen) link.style.display = '';
+    } catch(e) {}
+  })();
 </script>
 </body>
 </html>

@@ -188,6 +188,21 @@
 function toggleNav() {
   document.getElementById('nav-links').classList.toggle('open');
 }
+
+  // Show Awards nav link when regular season is complete and registration not yet open
+  (async () => {
+    try {
+      const data = await loadData();
+      const regWin = await fetchRegistrationWindow();
+      const today = new Date(); today.setHours(0,0,0,0);
+      const regStart = regWin && regWin.StartDate ? new Date(regWin.StartDate + 'T00:00:00') : null;
+      const regOpen = regStart && today >= regStart;
+      const regularGames = data.schedule.filter(g => Number(g.Playoff||0) === 0);
+      const regularDone = regularGames.length > 0 && regularGames.every(g => g.Status !== 'Upcoming');
+      const link = document.getElementById('awards-nav-link');
+      if (link && regularDone && !regOpen) link.style.display = '';
+    } catch(e) {}
+  })();
 </script>
 </body>
 </html>
