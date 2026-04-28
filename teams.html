@@ -28,6 +28,7 @@
       <a class="nav-link active" href="teams.html">Teams</a>
       <a class="nav-link" href="schedule.html">Schedule/Results</a>
       <a class="nav-link" href="stats.html">Stats</a>
+      <a class="nav-link" id="awards-nav-link" href="awards.html" style="display:none;">🏆 Awards</a>
       <a class="nav-link" href="handouts.html">Handouts</a>
       <a class="nav-link" href="registration.html">Registration</a>
       <a class="nav-link" href="contact.html">Contact</a>
@@ -137,7 +138,7 @@ function renderTeams() {
     const h2hRows = opponents.map((opp, idx) => {
       const rec = h2hRecord(t.Team, opp, schedule, _teamsSeason);
       const color = TEAM_COLORS[opp]?.primary || '#999';
-      const gdot = '<span style="width:1px;height:1px;border-radius:50%;background:#9ca3af;display:inline-block;margin:0 4px;vertical-align:middle;"></span>';
+      const gdot = '<span style="width:2px;height:2px;border-radius:50%;background:#9ca3af;display:inline-block;margin:0 4px;vertical-align:middle;"></span>';
       let recStr;
       if (rec.gp === 0) {
         recStr = '<span style="color:var(--text-muted);">–</span>';

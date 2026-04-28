@@ -59,6 +59,8 @@ Sheet ID: already configured in js/data.js
 - Registration
 - Season
 - Round Robin
+- Season
+- Champions
 - Registrations (auto-created by Apps Script on first registration submission)
 
 ### Season tab
@@ -70,6 +72,15 @@ The Season tab has NO column headers. Row 1 contains the label "Season" and row 
 | 2025-26     |
 
 Update the value in row 2 each year and the entire site refreshes automatically — no code changes needed.
+
+### Champions tab
+Single column, no header needed. Put the winning team name in the first cell:
+
+| (first cell) |
+|--------------|
+| Toronto      |
+
+This is read by the Awards page to display the VAHL Champions playoff award.
 
 ### Round Robin tab
 One column per team, header = team name, value row = round robin points total:
@@ -323,6 +334,7 @@ Place PDF files in the handouts/ folder with these exact filenames:
 | Handouts | handouts.html | Downloadable PDF documents |
 | Registration | registration.html | Date-gated registration form, auto-fills Google Sheet |
 | Boxscore | boxscore.html | Full game stats — skaters + goalies for a single game |
+| Awards | awards.html | Season and playoff awards, auto-calculated from Sheet data |
 | Contact | contact.html | Contact form + rink info and map |
 
 ---
@@ -348,6 +360,17 @@ Place PDF files in the handouts/ folder with these exact filenames:
 | Dallas | #4ade80 | #86efac | #14532d |
 
 ---
+
+## Awards Page
+
+The Awards nav link (🏆 Awards) appears automatically between Stats and Handouts when:
+- All regular season games (Playoff = 0) have been played
+- Registration for the next season has not yet opened
+
+It disappears automatically when registration opens.
+
+**Regular Season Awards:** President's Trophy, Rocket Richard, Art Ross, Norris, Vezina, Lady Byng
+**Playoff Awards:** VAHL Champions (from Champions tab), Conn Smythe (most playoff pts), Prince of Wales (top Round Robin team)
 
 ## Tips & Notes
 

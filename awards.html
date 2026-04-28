@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Awards — VAHL</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16x16.png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png"/>
+  <link rel="manifest" href="site.webmanifest"/>
+  <meta name="theme-color" content="#1e40af"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .award-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+    }
+    .award-icon {
+      font-size: 36px;
+      flex-shrink: 0;
+      line-height: 1;
+      margin-top: 2px;
+    }
+    .award-body { flex: 1; min-width: 0; }
+    .award-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+    .award-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+    .award-winner {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #1e40af;
+      line-height: 1.1;
+    }
+    .award-winner-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+    .award-winner a {
+      color: #1e40af;
+      text-decoration: none;
+    }
+    .award-winner a:hover { text-decoration: underline; }
+    .award-team-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+    .lady-byng-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .lady-byng-player {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #1e40af;
+    }
+    .not-available {
+      color: var(--text-muted);
+      font-size: 15px;
+      font-style: italic;
+      padding: 2rem 0;
+      text-align: center;
+    }
+    @media (max-width: 640px) {
+      .award-card { flex-direction: column; gap: 0.75rem; }
+      .award-icon { font-size: 28px; }
+      .award-winner { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="container nav-inner">
+    <a class="nav-logo" href="index.html"><img src="logos/vahl-logo.svg" alt="VAHL"/>VAHL</a>
+    <button class="nav-burger" onclick="toggleNav()" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="nav-links">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="teams.html">Teams</a>
+      <a class="nav-link" href="schedule.html">Schedule/Results</a>
+      <a class="nav-link" href="stats.html">Stats</a>
+      <a class="nav-link active" href="awards.html">🏆 Awards</a>
+      <a class="nav-link" href="handouts.html">Handouts</a>
+      <a class="nav-link" href="registration.html">Registration</a>
+      <a class="nav-link" href="contact.html">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="page-header">
+    <p class="eyebrow"><span class="season-label">2025-26 Season</span></p>
+    <h1 class="page-title">Awards</h1>
+    <p class="page-sub">Season honours and individual awards</p>
+  </div>
+
+  <div id="loading" style="padding:2rem 0;color:var(--text-muted);">Loading awards data…</div>
+  <div id="content" style="display:none;">
+
+    <!-- SEASON TOGGLE -->
+    <div class="season-toggle" id="awards-toggle">
+      <button class="s-btn active" onclick="setAwardsSeason('regular',this)">Regular Season</button>
+      <button class="s-btn" onclick="setAwardsSeason('playoff',this)">Playoffs</button>
+    </div>
+
+    <!-- REGULAR SEASON AWARDS -->
+    <div id="regular-awards"></div>
+
+    <!-- PLAYOFF AWARDS -->
+    <div id="playoff-awards" style="display:none;"></div>
+
+  </div>
+  <div id="no-data" style="display:none;" class="not-available">Awards are not yet available.</div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">Vaughan Adult Hockey League · <span class="season-label">2025-26 Season</span></div>
+</footer>
+
+<script src="js/data.js"></script>
+<script>
+function toggleNav() { document.getElementById('nav-links').classList.toggle('open'); }
+
+let _awardsData = null;
+let _awardsSeason = 'regular';
+
+function setAwardsSeason(type, btn) {
+  _awardsSeason = type;
+  document.querySelectorAll('#awards-toggle .s-btn').forEach(b => {
+    b.className = 's-btn' + (b === btn ? (type === 'playoff' ? ' active-playoff' : ' active') : '');
+  });
+  document.getElementById('regular-awards').style.display = type === 'regular' ? '' : 'none';
+  document.getElementById('playoff-awards').style.display  = type === 'playoff'  ? '' : 'none';
+}
+
+function playerLink(name, team) {
+  return `<a href="player.html?name=${encodeURIComponent(name)}&team=${encodeURIComponent(team)}">${name}</a>`;
+}
+
+function teamDotHtml(team) {
+  const color = TEAM_COLORS[team]?.primary || '#999';
+  return `<span class="award-team-dot" style="background:${color};"></span>`;
+}
+
+function awardCard(icon, name, desc, winnerHtml, subHtml) {
+  return `
+    <div class="award-card">
+      <div class="award-icon">${icon}</div>
+      <div class="award-body">
+        <div class="award-name">${name}</div>
+        <div class="award-desc">${desc}</div>
+        <div class="award-winner">${winnerHtml}</div>
+        ${subHtml ? `<div class="award-winner-sub">${subHtml}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+function buildRegularAwards(data) {
+  const { roster, gameStats, goalieStats, goalieRoster, schedule } = data;
+
+  const skaters = aggregateSkaters(roster, gameStats, schedule, 'regular');
+  const goalies = aggregateGoalies(goalieRoster, goalieStats, schedule, 'regular');
+  const teams   = buildTeams(schedule, 'regular');
+  const sorted  = standingsSort(teams, schedule, skaters, goalies);
+
+  let html = '';
+
+  // 1. President's Trophy — 1st place team
+  const first = sorted[0];
+  if (first) {
+    html += awardCard('🏆', "President's Trophy",
+      'Awarded to the team that finishes first overall in the regular season standings.',
+      `${teamDotHtml(first.Team)}<a href="roster.html?team=${encodeURIComponent(first.Team)}">${first.Team}</a>`,
+      `${first.W}W · ${first.L}L · ${first.T}T · ${first.PTS} pts`
+    );
+  }
+
+  // 2. Maurice "Rocket" Richard Trophy — Most goals
+  const topGoals = [...skaters].sort((a,b) => b.G - a.G || b.PTS - a.PTS)[0];
+  if (topGoals) {
+    html += awardCard('🎯', 'Maurice "Rocket" Richard Trophy',
+      'Awarded to the player with the most goals in the regular season.',
+      `${teamDotHtml(topGoals.Team)}${playerLink(topGoals.Name, topGoals.Team)}`,
+      `${topGoals.G} goals · ${topGoals.PTS} pts · ${topGoals.Team}`
+    );
+  }
+
+  // 3. Art Ross Trophy — Most points
+  const topPts = [...skaters].sort((a,b) => b.PTS - a.PTS || b.G - a.G)[0];
+  if (topPts) {
+    html += awardCard('📊', 'Art Ross Trophy',
+      'Awarded to the player with the most points in the regular season.',
+      `${teamDotHtml(topPts.Team)}${playerLink(topPts.Name, topPts.Team)}`,
+      `${topPts.PTS} pts (${topPts.G}G + ${topPts.A}A) · ${topPts.Team}`
+    );
+  }
+
+  // 4. James Norris Memorial Trophy — Defenceman with most points
+  const defencemen = skaters.filter(p => p.Pos === 'D');
+  const topDef = [...defencemen].sort((a,b) => b.PTS - a.PTS || b.G - a.G)[0];
+  if (topDef) {
+    html += awardCard('🛡️', 'James Norris Memorial Trophy',
+      'Awarded to the defenceman with the most points in the regular season.',
+      `${teamDotHtml(topDef.Team)}${playerLink(topDef.Name, topDef.Team)}`,
+      `${topDef.PTS} pts (${topDef.G}G + ${topDef.A}A) · Defence · ${topDef.Team}`
+    );
+  } else {
+    html += awardCard('🛡️', 'James Norris Memorial Trophy',
+      'Awarded to the defenceman with the most points in the regular season.',
+      '<span style="color:var(--text-muted);">No defencemen found in roster</span>', '');
+  }
+
+  // 5. Vezina Trophy — Lowest GAA (min 10 GP), tiebreaker: W then SO
+  const eligibleGoalies = goalies.filter(g => (g.W + g.L + g.T) >= 1);
+  const topGoalie = [...eligibleGoalies].sort((a,b) => {
+    if (a.GAA !== b.GAA) return a.GAA - b.GAA;
+    if (b.W !== a.W) return b.W - a.W;
+    return b.SO - a.SO;
+  })[0];
+  if (topGoalie) {
+    html += awardCard('🥅', 'Vezina Trophy',
+      'Awarded to the goalie with the lowest goals-against average. Tiebreaker: most wins, then most shutouts.',
+      `${teamDotHtml(topGoalie.Team)}<a href="player.html?name=${encodeURIComponent(topGoalie.Name)}&team=${encodeURIComponent(topGoalie.Team)}&type=goalie">${topGoalie.Name}</a>`,
+      `${topGoalie.GAA.toFixed(2)} GAA · ${topGoalie.W}W · ${topGoalie.SO} SO · ${topGoalie.Team}`
+    );
+  }
+
+  // 6. Lady Byng — All players with 0 PIM
+  const ladyByng = [...skaters].filter(p => Number(p.PIM) === 0 && (p.G > 0 || p.A > 0))
+    .sort((a,b) => b.PTS - a.PTS || a.Name.localeCompare(b.Name));
+  const ladyByngAll = [...skaters].filter(p => Number(p.PIM) === 0)
+    .sort((a,b) => b.PTS - a.PTS || a.Name.localeCompare(b.Name));
+  const listed = ladyByngAll.length > 0 ? ladyByngAll : [];
+  const ladyByngHtml = listed.length > 0
+    ? `<div class="lady-byng-list">${listed.map(p =>
+        `<span class="lady-byng-player">${teamDotHtml(p.Team)}${p.Name}</span>`
+      ).join('')}</div>`
+    : '<span style="color:var(--text-muted);">No players with zero penalty minutes</span>';
+
+  html += awardCard('🤝', 'Lady Byng Trophy',
+    'Awarded to all players who played the regular season with zero penalty minutes.',
+    ladyByngHtml,
+    listed.length > 0 ? `${listed.length} player${listed.length !== 1 ? 's' : ''} with 0 PIM this season` : ''
+  );
+
+  document.getElementById('regular-awards').innerHTML = html;
+}
+
+async function buildPlayoffAwards(data, rrData) {
+  const { roster, gameStats, goalieStats, goalieRoster, schedule } = data;
+
+  const playoffGames = schedule.filter(g => Number(g.Playoff||0) === 1);
+  const allPlayoffPlayed = playoffGames.length > 0 && playoffGames.every(g => g.Status !== 'Upcoming');
+
+  if (!allPlayoffPlayed) {
+    document.getElementById('playoff-awards').innerHTML =
+      '<p class="not-available">Playoff awards will be available once all playoff games have been played.</p>';
+    return;
+  }
+
+  let html = '';
+
+  // Fetch champions from Champions tab
+  let champTeam = '';
+  try {
+    const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(TAB_NAMES.champions);
+    const res = await fetch(url);
+    const text = await res.text();
+    const json = JSON.parse(text.substring(47, text.length - 2));
+    for (const row of (json.table.rows || [])) {
+      for (const cell of (row.c || [])) {
+        const v = cell && cell.v != null ? String(cell.v).trim() : '';
+        if (v) { champTeam = v; break; }
+      }
+      if (champTeam) break;
+    }
+  } catch(e) {}
+
+  // 1. VAHL Champions
+  if (champTeam) {
+    html += awardCard('🏒', 'VAHL Champions',
+      'Awarded to the team that wins the championship final.',
+      `${teamDotHtml(champTeam)}<a href="roster.html?team=${encodeURIComponent(champTeam)}">${champTeam}</a>`,
+      'VAHL Champions'
+    );
+  } else {
+    html += awardCard('🏒', 'VAHL Champions',
+      'Awarded to the team that wins the championship final.',
+      '<span style="color:var(--text-muted);">Not yet determined — update Champions tab in Google Sheet</span>', '');
+  }
+
+  // 2. Conn Smythe — Most playoff points
+  const playoffSkaters = aggregateSkaters(roster, gameStats, schedule, 'playoff');
+  const connSmythe = [...playoffSkaters].sort((a,b) => b.PTS - a.PTS || b.G - a.G)[0];
+  if (connSmythe && connSmythe.PTS > 0) {
+    html += awardCard('🌟', 'Conn Smythe Trophy',
+      'Awarded to the most valuable player of the playoffs, based on playoff points.',
+      `${teamDotHtml(connSmythe.Team)}${playerLink(connSmythe.Name, connSmythe.Team)}`,
+      `${connSmythe.PTS} playoff pts (${connSmythe.G}G + ${connSmythe.A}A) · ${connSmythe.Team}`
+    );
+  } else {
+    html += awardCard('🌟', 'Conn Smythe Trophy',
+      'Awarded to the most valuable player of the playoffs.',
+      '<span style="color:var(--text-muted);">No playoff stats recorded yet</span>', '');
+  }
+
+  // 3. Prince of Wales — 1st in Round Robin (most RRPTS)
+  if (rrData && Object.keys(rrData).length) {
+    const rrSorted = Object.entries(rrData)
+      .map(([team, pts]) => ({ team, pts: Number(pts) }))
+      .sort((a,b) => b.pts - a.pts);
+    const wales = rrSorted[0];
+    if (wales) {
+      html += awardCard('👑', 'Prince of Wales Trophy',
+        'Awarded to the team that finishes first in the round robin standings.',
+        `${teamDotHtml(wales.team)}<a href="roster.html?team=${encodeURIComponent(wales.team)}">${wales.team}</a>`,
+        `${wales.pts} round robin pts`
+      );
+    }
+  } else {
+    html += awardCard('👑', 'Prince of Wales Trophy',
+      'Awarded to the team that finishes first in the round robin standings.',
+      '<span style="color:var(--text-muted);">Round Robin points not yet available</span>', '');
+  }
+
+  document.getElementById('playoff-awards').innerHTML = html;
+}
+
+async function init() {
+  try {
+    const [data, rrData] = await Promise.all([loadData(), fetchRoundRobin()]);
+    _awardsData = data;
+
+    const { schedule } = data;
+    const regularGames = schedule.filter(g => Number(g.Playoff||0) === 0);
+    const regularDone  = regularGames.length > 0 && regularGames.every(g => g.Status !== 'Upcoming');
+
+    document.getElementById('loading').style.display = 'none';
+
+    if (!regularDone) {
+      document.getElementById('no-data').style.display = '';
+      return;
+    }
+
+    document.getElementById('content').style.display = '';
+    buildRegularAwards(data);
+    await buildPlayoffAwards(data, rrData);
+
+    // Show/hide playoff toggle based on whether any playoff games exist
+    const playoffGames = schedule.filter(g => Number(g.Playoff||0) === 1);
+    if (playoffGames.length === 0) {
+      document.getElementById('awards-toggle').style.display = 'none';
+    }
+
+  } catch(e) {
+    console.error('Awards error:', e);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('no-data').style.display = '';
+  } finally {
+    const loadingEl = document.getElementById('loading');
+    if (loadingEl) loadingEl.style.display = 'none';
+  }
+
+  // Apply season label
+  fetchSeason().then(s => {
+    const label = s + ' Season';
+    document.querySelectorAll('.season-label').forEach(el => el.textContent = label);
+  });
+}
+
+init();
+</script>
+</body>
+</html>

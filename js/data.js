@@ -28,6 +28,7 @@ const TAB_NAMES = {
   registration: 'Registration',
   roundRobin:   'Round Robin',
   season:       'Season',
+  champions:    'Champions',
 };
 
 const TEAM_COLORS = {
