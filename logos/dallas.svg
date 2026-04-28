@@ -1,0 +1,8 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="60" cy="60" r="54" fill="#14532d"/>
+  <circle cx="60" cy="60" r="54" fill="none" stroke="#4ade80" stroke-width="3"/>
+  <circle cx="60" cy="60" r="46" fill="none" stroke="#16a34a" stroke-width="1.5"/>
+  <polygon points="60,28 60,92 32,46 88,46" fill="#16a34a" stroke="#4ade80" stroke-width="2"/>
+  <text x="60" y="70" font-family="Arial Black,sans-serif" font-size="16" font-weight="900" fill="#ffffff" text-anchor="middle">DAL</text>
+  <text x="60" y="83" font-family="Arial Narrow,sans-serif" font-size="8" fill="#86efac" text-anchor="middle" letter-spacing="1">DALLAS</text>
+</svg>

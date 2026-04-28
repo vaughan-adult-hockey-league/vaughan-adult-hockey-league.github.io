@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stats — VAHL</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16x16.png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png"/>
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167x167.png"/>
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png"/>
+  <link rel="apple-touch-icon" sizes="120x120" href="icons/icon-120x120.png"/>
+  <link rel="manifest" href="site.webmanifest"/>
+  <meta name="theme-color" content="#1e40af"/>
+  <meta name="msapplication-TileColor" content="#1e40af"/>
+  <meta name="msapplication-TileImage" content="icons/icon-144x144.png"/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="container nav-inner">
+    <a class="nav-logo" href="index.html"><img src="logos/vahl-logo.jpg" alt="VAHL"/>VAHL</a>
+    <button class="nav-burger" onclick="toggleNav()" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="nav-links">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="teams.html">Teams</a>
+      <a class="nav-link" href="schedule.html">Schedule/Results</a>
+      <a class="nav-link active" href="stats.html">Stats</a>
+      <a class="nav-link" href="handouts.html">Handouts</a>
+      <a class="nav-link" href="registration.html">Registration</a>
+      <a class="nav-link" href="contact.html">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="page-header">
+    <p class="eyebrow"><span class="season-label">2026–27 Season</span></p>
+    <h1 class="page-title">Stats</h1>
+    <p class="page-sub">League-wide leaderboards</p>
+  </div>
+
+  <div class="season-toggle" id="stats-season-toggle" style="margin-bottom:1rem;">
+    <span class="season-toggle-label">Season:</span>
+    <button class="s-btn active" onclick="setStatsSeason('regular',this)">Regular Season</button>
+    <button class="s-btn" onclick="setStatsSeason('playoff',this)">Playoffs</button>
+    <button class="s-btn" onclick="setStatsSeason('all',this)">Combined</button>
+  </div>
+
+  <div class="tab-row">
+    <button class="tab-btn active" id="tab-skaters" onclick="switchTab('skaters')">Skaters</button>
+    <button class="tab-btn" id="tab-goalies" onclick="switchTab('goalies')">Goalies</button>
+  </div>
+
+  <!-- SKATERS -->
+  <div id="skaters-section">
+    <div class="filter-row" id="skater-filters">
+      <button class="f-btn active" onclick="setSkaterFilter('All')">All teams</button>
+      <button class="f-btn" onclick="setSkaterFilter('Toronto')">Toronto</button>
+      <button class="f-btn" onclick="setSkaterFilter('Philadelphia')">Philadelphia</button>
+      <button class="f-btn" onclick="setSkaterFilter('Los Angeles')">Los Angeles</button>
+      <button class="f-btn" onclick="setSkaterFilter('Dallas')">Dallas</button>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="data-table" id="skaters-table" style="min-width:520px;">
+        <thead>
+          <tr>
+            <th class="left" style="width:28px;"></th>
+            <th class="left" style="width:150px;">Player</th>
+            <th class="left" style="width:36px;">#</th>
+            <th class="left" style="width:44px;" data-col="pos" data-label="Pos">Pos</th>
+            <th class="left" style="width:110px;">Team</th>
+            <th style="width:52px;" data-col="pts" data-dir="-1" class="sorted">PTS ↓</th>
+            <th style="width:44px;" data-col="g" data-label="G">G</th>
+            <th style="width:44px;" data-col="a" data-label="A">A</th>
+            <th style="width:44px;" data-col="pim" data-label="PIM">PIM</th>
+          </tr>
+        </thead>
+        <tbody id="skaters-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- GOALIES -->
+  <div id="goalies-section" style="display:none;">
+    <div class="filter-row" id="goalie-filters">
+      <button class="f-btn active" onclick="setGoalieFilter('All')">All teams</button>
+      <button class="f-btn" onclick="setGoalieFilter('Toronto')">Toronto</button>
+      <button class="f-btn" onclick="setGoalieFilter('Philadelphia')">Philadelphia</button>
+      <button class="f-btn" onclick="setGoalieFilter('Los Angeles')">Los Angeles</button>
+      <button class="f-btn" onclick="setGoalieFilter('Dallas')">Dallas</button>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="data-table" id="goalies-table" style="min-width:540px;">
+        <thead>
+          <tr>
+            <th class="left" style="width:28px;"></th>
+            <th class="left" style="width:140px;">Player</th>
+            <th class="left" style="width:36px;">#</th>
+            <th class="left" style="width:110px;">Team</th>
+            <th style="width:44px;" data-col="w">W</th>
+            <th style="width:44px;" data-col="l">L</th>
+            <th style="width:44px;" data-col="t">T</th>
+            <th style="width:44px;" data-col="ga">GA</th>
+            <th style="width:52px;" data-col="gaa" data-label="GAA" class="sorted">GAA ↓</th>
+            <th style="width:44px;" data-col="so">SO</th>
+            <th style="width:44px;" data-col="pim" data-label="PIM">PIM</th>
+          </tr>
+        </thead>
+        <tbody id="goalies-body"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer"><div class="container">Vaughan Adult Hockey League · <span class="season-label">2026–27 Season</span></div></footer>
+
+<script src="js/data.js"></script>
+<script>
+function toggleNav() { document.getElementById('nav-links').classList.toggle('open'); }
+
+let allSkaters = [], allGoalies = [];
+let skaterFilter = 'All', goalieFilter = 'All';
+let skaterSort = 'pts', skaterDir = 1;
+let goalieSort  = 'gaa', goalieDir  = 1;
+
+const POS_ORDER = { 'F': 0, 'D': 1 }; // 0 = forward, 1 = D
+
+function colVal(p, col) {
+  if (col === 'pos') return POS_ORDER[p.Pos] ?? 99;
+  const map = { pts:'PTS', g:'G', a:'A', pim:'PIM', w:'W', l:'L', t:'T', ga:'GA', gaa:'GAA', so:'SO' };
+  return Number(p[map[col]] ?? 0);
+}
+
+function renderSkaters() {
+  const data = skaterFilter === 'All' ? allSkaters : allSkaters.filter(p => p.Team === skaterFilter);
+  const sorted = [...data].sort((a,b) => {
+    if (skaterSort === 'pos') {
+      const aIsD = a.Pos === 'D', bIsD = b.Pos === 'D';
+      // skaterDir=1 → Forwards first (D=1 sorts last); skaterDir=-1 → D first (D=1 sorts first)
+      if (skaterDir === 1) {
+        // Forwards first, then D; within each group sort by PTS desc
+        if (aIsD !== bIsD) return aIsD ? 1 : -1;
+      } else {
+        // D first, then Forwards; within each group sort by PTS desc
+        if (aIsD !== bIsD) return aIsD ? -1 : 1;
+      }
+      return Number(b.PTS||0) - Number(a.PTS||0);
+    }
+    return skaterDir * (colVal(b, skaterSort) - colVal(a, skaterSort));
+  });
+  document.getElementById('skaters-body').innerHTML = sorted.map((p, i) => `
+    <tr>
+      <td class="left" style="padding-top:0.3rem;padding-bottom:0.3rem;"><span class="${i===0?'rank-1':'rank-num'}">${i+1}</span></td>
+      <td class="left" style="padding-top:0.3rem;padding-bottom:0.3rem;"><a href="player.html?name=${encodeURIComponent(p.Name)}&team=${encodeURIComponent(p.Team)}" style="font-weight:500;color:var(--text);text-decoration:none;" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='var(--text)'">${p.Name}</a></td>
+      <td class="left" style="padding-top:0.3rem;padding-bottom:0.3rem;"><span class="jersey-num">${p.Jersey || '–'}</span></td>
+      <td class="left" style="padding-top:0.3rem;padding-bottom:0.3rem;"><span class="pos-badge">${p.Pos || '–'}</span></td>
+      <td class="left" style="padding-top:0.3rem;padding-bottom:0.3rem;font-size:13px;">
+        <a href="roster.html?team=${encodeURIComponent(p.Team)}" style="display:inline-flex;align-items:center;gap:5px;color:var(--text);text-decoration:none;" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='var(--text)'">${teamDot(p.Team)}${p.Team}</a>
+      </td>
+      <td style="padding-top:0.3rem;padding-bottom:0.3rem;"><span class="${skaterSort==='pts'||skaterSort==='pos'?'stat-hi':''}">${p.PTS}</span></td>
+      <td style="padding-top:0.3rem;padding-bottom:0.3rem;"><span class="${skaterSort==='g'?'stat-hi':''}">${p.G}</span></td>
+      <td style="padding-top:0.3rem;padding-bottom:0.3rem;"><span class="${skaterSort==='a'?'stat-hi':''}">${p.A}</span></td>
+      <td style="padding-top:0.3rem;padding-bottom:0.3rem;"><span class="${skaterSort==='pim'?'stat-hi':''}">${p.PIM}</span></td>
+    </tr>`).join('');
+}
+
+function renderGoalies() {
+  const data = goalieFilter === 'All' ? allGoalies : allGoalies.filter(p => p.Team === goalieFilter);
+  const sorted = [...data].sort((a,b) => goalieDir * (colVal(a, goalieSort) - colVal(b, goalieSort)));
+  document.getElementById('goalies-body').innerHTML = sorted.map((p, i) => `
+    <tr>
+      <td class="left" style="padding-top:0.3rem;padding-bottom:0.3rem;"><span class="${i===0?'rank-1':'rank-num'}">${i+1}</span></td>
+      <td class="left" style="padding-top:0.3rem;padding-bottom:0.3rem;"><a href="player.html?name=${encodeURIComponent(p.Name)}&team=${encodeURIComponent(p.Team)}&type=goalie" style="font-weight:500;color:var(--text);text-decoration:none;" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='var(--text)'">${p.Name}</a></td>
+      <td class="left" style="padding-top:0.3rem;padding-bottom:0.3rem;"><span class="jersey-num">${p.Jersey || '–'}</span></td>
+      <td class="left" style="padding-top:0.3rem;padding-bottom:0.3rem;font-size:13px;">
+        <a href="roster.html?team=${encodeURIComponent(p.Team)}" style="display:inline-flex;align-items:center;gap:5px;color:var(--text);text-decoration:none;" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='var(--text)'">${teamDot(p.Team)}${p.Team}</a>
+      </td>
+      <td style="padding-top:0.3rem;padding-bottom:0.3rem;">${p.W}</td>
+      <td style="padding-top:0.3rem;padding-bottom:0.3rem;">${p.L}</td>
+      <td style="padding-top:0.3rem;padding-bottom:0.3rem;">${p.T ?? 0}</td>
+      <td style="padding-top:0.3rem;padding-bottom:0.3rem;">${p.GA}</td>
+      <td style="padding-top:0.3rem;padding-bottom:0.3rem;"><span class="${goalieSort==='gaa'?'stat-hi':''}">${Number(p.GAA).toFixed(2)}</span></td>
+      <td style="padding-top:0.3rem;padding-bottom:0.3rem;"><span class="${goalieSort==='so'?'stat-hi':''}">${p.SO}</span></td>
+      <td style="padding-top:0.3rem;padding-bottom:0.3rem;">${p.PIM}</td>
+    </tr>`).join('');
+}
+
+// Sortable column headers
+document.querySelectorAll('#skaters-table th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    const defaultDir = col === 'pos' ? -1 : 1;
+    skaterDir = skaterSort === col ? skaterDir * -1 : defaultDir;
+    skaterSort = col;
+    // Reset ALL headers to their base label (strip any arrow or F/D indicator)
+    document.querySelectorAll('#skaters-table th[data-col]').forEach(t => {
+      t.classList.remove('sorted');
+      t.textContent = t.dataset.label || t.textContent.replace(/ [↑↓]$| F↑$| D↑$/g, '');
+      if (!t.dataset.label) t.dataset.label = t.textContent;
+    });
+    th.classList.add('sorted');
+    if (col === 'pos') {
+      th.textContent = skaterDir === 1 ? 'Pos F↑' : 'Pos D↑';
+    } else {
+      th.textContent = (th.dataset.label || col.toUpperCase()) + (skaterDir === 1 ? ' ↓' : ' ↑');
+    }
+    renderSkaters();
+  });
+});
+
+document.querySelectorAll('#goalies-table th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    const defaultDir = 1;
+    goalieDir = goalieSort === col ? goalieDir * -1 : defaultDir;
+    goalieSort = col;
+    document.querySelectorAll('#goalies-table th').forEach(t => { t.classList.remove('sorted'); t.textContent = t.textContent.replace(/ [↑↓]$/,''); });
+    th.classList.add('sorted');
+    th.textContent += goalieDir === 1 ? ' ↑' : ' ↓';
+    renderGoalies();
+  });
+});
+
+window.switchTab = function(tab) {
+  document.getElementById('skaters-section').style.display = tab==='skaters' ? '' : 'none';
+  document.getElementById('goalies-section').style.display = tab==='goalies' ? '' : 'none';
+  document.getElementById('tab-skaters').classList.toggle('active', tab==='skaters');
+  document.getElementById('tab-goalies').classList.toggle('active', tab==='goalies');
+};
+
+window.setSkaterFilter = function(team) {
+  skaterFilter = team;
+  document.querySelectorAll('#skater-filters .f-btn').forEach(b => b.classList.toggle('active', b.textContent.trim() === (team==='All'?'All teams':team)));
+  renderSkaters();
+};
+
+window.setGoalieFilter = function(team) {
+  goalieFilter = team;
+  document.querySelectorAll('#goalie-filters .f-btn').forEach(b => b.classList.toggle('active', b.textContent.trim() === (team==='All'?'All teams':team)));
+  renderGoalies();
+};
+
+let _statsData = null;
+let _statsSeason = 'regular';
+
+window.setStatsSeason = function(type, btn) {
+  _statsSeason = type;
+  document.querySelectorAll('#stats-season-toggle .s-btn').forEach(b => {
+    b.className = 's-btn' + (b === btn ? (type === 'playoff' ? ' active-playoff' : type === 'all' ? ' active-combined' : ' active') : '');
+  });
+  const { roster, goalieRoster, gameStats, goalieStats, schedule } = _statsData;
+  allSkaters = aggregateSkaters(roster, gameStats, schedule, _statsSeason);
+  allGoalies = aggregateGoalies(goalieRoster, goalieStats, schedule, _statsSeason);
+  renderSkaters();
+  renderGoalies();
+};
+
+async function init() {
+  const data = await loadData();
+  _statsData = data;
+  allSkaters = aggregateSkaters(data.roster, data.gameStats, data.schedule, _statsSeason);
+  allGoalies = aggregateGoalies(data.goalieRoster, data.goalieStats, data.schedule, _statsSeason);
+
+  // Check URL param for team pre-filter
+  const params = new URLSearchParams(window.location.search);
+  const teamParam = params.get('team');
+  if (teamParam) { skaterFilter = teamParam; goalieFilter = teamParam; }
+
+  renderSkaters();
+  renderGoalies();
+}
+init();
+
+  // Apply dynamic season label from Google Sheet
+  fetchSeason().then(s => {
+    const label = s + ' Season';
+    document.querySelectorAll('.season-label').forEach(el => el.textContent = label);
+  });
+</script>
+</body>
+</html>

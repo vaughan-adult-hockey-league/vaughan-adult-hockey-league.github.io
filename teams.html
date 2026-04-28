@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Teams — VAHL</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16x16.png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png"/>
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167x167.png"/>
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png"/>
+  <link rel="apple-touch-icon" sizes="120x120" href="icons/icon-120x120.png"/>
+  <link rel="manifest" href="site.webmanifest"/>
+  <meta name="theme-color" content="#1e40af"/>
+  <meta name="msapplication-TileColor" content="#1e40af"/>
+  <meta name="msapplication-TileImage" content="icons/icon-144x144.png"/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="container nav-inner">
+    <a class="nav-logo" href="index.html"><img src="logos/vahl-logo.jpg" alt="VAHL"/>VAHL</a>
+    <button class="nav-burger" onclick="toggleNav()" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="nav-links">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link active" href="teams.html">Teams</a>
+      <a class="nav-link" href="schedule.html">Schedule/Results</a>
+      <a class="nav-link" href="stats.html">Stats</a>
+      <a class="nav-link" href="handouts.html">Handouts</a>
+      <a class="nav-link" href="registration.html">Registration</a>
+      <a class="nav-link" href="contact.html">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="page-header">
+    <p class="eyebrow"><span class="season-label">2026–27 Season</span></p>
+    <h1 class="page-title">Teams</h1>
+    <p class="page-sub">4 teams · Click a team to view roster</p>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem;">
+    <p class="section-label" style="margin:0;">League Standings</p>
+    <div class="season-toggle" style="margin:0;" id="teams-season-toggle">
+      <button class="s-btn active" onclick="setTeamsSeason('regular',this)">Regular Season</button>
+      <button class="s-btn" onclick="setTeamsSeason('playoff',this)">Playoffs</button>
+    </div>
+  </div>
+  <div id="teams-list"></div>
+</main>
+
+<footer class="site-footer"><div class="container">Vaughan Adult Hockey League · <span class="season-label">2026–27 Season</span></div></footer>
+
+<script src="js/data.js"></script>
+<script>
+function toggleNav() { document.getElementById('nav-links').classList.toggle('open'); }
+
+function teamLogo(team) {
+  const map = { 'Toronto':'toronto','Philadelphia':'philadelphia','Los Angeles':'losangeles','Dallas':'dallas' };
+  return `logos/${map[team]}.svg`;
+}
+
+function streakDots(team, schedule, seasonType) {
+  // Filter by season type if provided
+  let filtered = schedule.filter(g => g.Status !== 'Upcoming' && (g.Home === team || g.Away === team));
+  if (seasonType === 'playoff') filtered = filtered.filter(g => Number(g.Playoff||0) === 1);
+  else if (seasonType === 'regular') filtered = filtered.filter(g => Number(g.Playoff||0) === 0);
+  const games = filtered.slice(-5);
+  const count = games.length;
+  const dots = games.map(g => {
+    const isTie = g.Status === 'Tie';
+    const won = !isTie && ((g.Home === team && Number(g.HomeScore) > Number(g.AwayScore)) || (g.Away === team && Number(g.AwayScore) > Number(g.HomeScore)));
+    const color = won ? '#22c55e' : isTie ? '#ffc949' : 'rgb(255,0,0)';
+    const label = won ? 'W' : isTie ? 'T' : 'L';
+    return `<span class="streak-dot" style="background:${color};" title="${label}"></span>`;
+  }).join('');
+  return { dots, count };
+}
+
+let _teamsData = null;
+let _teamsSeason = 'regular';
+
+function setTeamsSeason(type, btn) {
+  _teamsSeason = type;
+  document.querySelectorAll('#teams-season-toggle .s-btn').forEach(b => {
+    b.className = 's-btn' + (b === btn ? (type === 'playoff' ? ' active-playoff' : type === 'all' ? ' active-combined' : ' active') : '');
+  });
+  renderTeams();
+}
+
+function h2hRecord(team, opponent, schedule, seasonType) {
+  let games = schedule.filter(g =>
+    g.Status !== 'Upcoming' &&
+    ((g.Home === team && g.Away === opponent) || (g.Home === opponent && g.Away === team))
+  );
+  if (seasonType === 'playoff') games = games.filter(g => Number(g.Playoff||0) === 1);
+  else if (seasonType === 'regular') games = games.filter(g => Number(g.Playoff||0) === 0);
+
+  let w=0, l=0, t=0;
+  games.forEach(g => {
+    const isTie = g.Status === 'Tie';
+    const teamScored = g.Home === team ? Number(g.HomeScore) : Number(g.AwayScore);
+    const oppScored  = g.Home === team ? Number(g.AwayScore)  : Number(g.HomeScore);
+    if (isTie) t++;
+    else if (teamScored > oppScored) w++;
+    else l++;
+  });
+  return { w, l, t, gp: w+l+t };
+}
+
+function renderTeams() {
+  const { roster, goalieRoster, gameStats, goalieStats, schedule } = _teamsData;
+  const teams = buildTeams(schedule, _teamsSeason);
+  const skaters = aggregateSkaters(roster, gameStats, schedule, _teamsSeason);
+  const goalies = aggregateGoalies(goalieRoster, goalieStats, schedule, _teamsSeason);
+  const sorted = standingsSort(teams, schedule, skaters, goalies);
+  const allTeamNames = TEAM_NAMES;
+
+  document.getElementById('teams-list').innerHTML = sorted.map((t,i) => {
+    const diff = t.GF - t.GA;
+    const suffix = i === 0 ? 'st' : i === 1 ? 'nd' : i === 2 ? 'rd' : 'th';
+
+    // Head-to-head records vs all other teams
+    const opponents = allTeamNames.filter(n => n !== t.Team);
+    const h2hRows = opponents.map((opp, idx) => {
+      const rec = h2hRecord(t.Team, opp, schedule, _teamsSeason);
+      const color = TEAM_COLORS[opp]?.primary || '#999';
+      const gdot = '<span style="width:5px;height:5px;border-radius:50%;background:#9ca3af;display:inline-block;margin:0 4px;vertical-align:middle;"></span>';
+      let recStr;
+      if (rec.gp === 0) {
+        recStr = '<span style="color:var(--text-muted);">–</span>';
+      } else {
+        recStr = '<span style="color:#16a34a;">' + rec.w + 'W</span>' + gdot +
+                 '<span style="color:#dc2626;">' + rec.l + 'L</span>' +
+                 (rec.t > 0 ? gdot + '<span style="color:#ffc949;">' + rec.t + 'T</span>' : '');
+      }
+      const borderTop = idx > 0 ? 'border-top:1px solid var(--border);' : '';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0;' + borderTop + '">' +
+        '<div style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;">' +
+          '<span style="width:8px;height:8px;border-radius:50%;background:' + color + ';display:inline-block;flex-shrink:0;"></span>' +
+          '<a href="roster.html?team=' + encodeURIComponent(opp) + '" style="color:var(--text);text-decoration:none;" onmouseover="this.style.color=\'#1e40af\'" onmouseout="this.style.color=\'var(--text)\'">' + opp + '</a>' +
+        '</div>' +
+        '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:15px;font-weight:400;">' + recStr + '</div>' +
+      '</div>';
+    }).join('');
+
+    return `
+    <div class="team-card">
+      <div class="team-card-header">
+        <a href="roster.html?team=${encodeURIComponent(t.Team)}"><img src="${teamLogo(t.Team)}" alt="${t.Team}" style="width:180px;height:180px;display:block;"/></a>
+        <div style="flex:1;">
+          <div class="team-card-title">${t.Team}</div>
+          <div class="team-card-record">${t.W}W · ${t.L}L · ${t.T ?? 0}T · <strong>${t.PTS} pts</strong></div>
+          <div class="streak-row" style="margin-top:6px;">
+            ${(() => { const s = streakDots(t.Team, _teamsData.schedule, _teamsSeason); return `${s.dots}<span style="font-size:11px;color:var(--text-muted);margin-left:4px;">Last ${s.count}</span>`; })()}
+          </div>
+        </div>
+        <div class="team-card-rank">
+          <div class="team-card-rank-num">${i+1}<sup style="font-size:14px;">${suffix}</sup></div>
+          <div class="team-card-rank-lbl">in league</div>
+        </div>
+      </div>
+      <div class="team-stats-row">
+        <div class="tstat"><span class="tstat-val">${t.GF}</span><span class="tstat-lbl">Goals For</span></div>
+        <div class="tstat"><span class="tstat-val">${t.GA}</span><span class="tstat-lbl">Goals Against</span></div>
+        <div class="tstat"><span class="tstat-val" style="color:${diff>=0?'#16a34a':'#dc2626'}">${diff>0?'+':''}${diff}</span><span class="tstat-lbl">Differential</span></div>
+      </div>
+      <div style="padding:0.75rem 1rem;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.5rem;">Head-to-Head</div>
+        ${h2hRows}
+      </div>
+      <div class="team-card-footer">
+        <a href="roster.html?team=${encodeURIComponent(t.Team)}" class="tc-btn">Roster →</a>
+        <a href="stats.html?team=${encodeURIComponent(t.Team)}" class="tc-btn">Stats →</a>
+        <a href="schedule.html?team=${encodeURIComponent(t.Team)}" class="tc-btn">Schedule →</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function init() {
+  const data = await loadData();
+  _teamsData = data;
+  renderTeams();
+}
+init();
+
+  // Apply dynamic season label from Google Sheet
+  fetchSeason().then(s => {
+    const label = s + ' Season';
+    document.querySelectorAll('.season-label').forEach(el => el.textContent = label);
+  });
+</script>
+</body>
+</html>

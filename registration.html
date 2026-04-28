@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registration — VAHL</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16x16.png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png"/>
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167x167.png"/>
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png"/>
+  <link rel="apple-touch-icon" sizes="120x120" href="icons/icon-120x120.png"/>
+  <link rel="manifest" href="site.webmanifest"/>
+  <meta name="theme-color" content="#1e40af"/>
+  <meta name="msapplication-TileColor" content="#1e40af"/>
+  <meta name="msapplication-TileImage" content="icons/icon-144x144.png"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .reg-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 640px) { .reg-layout { grid-template-columns: 1fr; } }
+
+    .form-group { margin-bottom: 1.1rem; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      font-size: 15px;
+      font-family: 'Barlow', sans-serif;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+      box-sizing: border-box;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: #94a3b8; }
+    .form-group input.invalid, .form-group select.invalid { border-color: #ef4444; background: #fff5f5; }
+    .form-group input.valid, .form-group select.valid { border-color: #22c55e; }
+    .field-error { display: block; font-size: 12px; color: #dc2626; margin-top: 4px; min-height: 16px; }
+
+    .submit-btn {
+      width: 100%;
+      padding: 0.85rem;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: 'Barlow', sans-serif;
+      background: #1e40af;
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .submit-btn:hover { opacity: 0.88; }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .status-msg {
+      display: none;
+      padding: 0.85rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 0.75rem;
+      text-align: center;
+    }
+    .status-msg.success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; display: block; }
+    .status-msg.error   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; display: block; }
+
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    .info-card-header {
+      background: #eff6ff;
+      border-bottom: 1px solid #bfdbfe;
+      padding: 0.65rem 1.1rem;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #1e40af;
+    }
+    .info-card-body { padding: 1.1rem; font-size: 15px; line-height: 1.6; }
+    .info-row { display: flex; gap: 0.85rem; align-items: flex-start; margin-bottom: 0.9rem; }
+    .info-row:last-child { margin-bottom: 0; }
+    .info-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+    .info-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 2px; }
+    .info-val { color: var(--text); }
+    .etransfer-addr {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e40af;
+      word-break: break-all;
+    }
+    .fee-badge {
+      display: inline-block;
+      background: #1e40af;
+      color: #fff;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      padding: 4px 14px;
+      border-radius: var(--radius-sm);
+      margin-top: 4px;
+    }
+
+    /* Closed / loading states */
+    .reg-closed {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2.5rem 2rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .reg-closed-icon { font-size: 48px; margin-bottom: 1rem; }
+    .reg-closed-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .reg-closed-sub { font-size: 15px; color: var(--text-muted); margin-bottom: 1.5rem; }
+    .reg-contact-btn {
+      display: inline-block;
+      background: #1e40af;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Barlow', sans-serif;
+      padding: 10px 24px;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .reg-contact-btn:hover { opacity: 0.88; }
+
+    .window-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 5px 12px;
+      margin-bottom: 1.25rem;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="container nav-inner">
+    <a class="nav-logo" href="index.html"><img src="logos/vahl-logo.jpg" alt="VAHL"/>VAHL</a>
+    <button class="nav-burger" onclick="toggleNav()" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="nav-links">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="teams.html">Teams</a>
+      <a class="nav-link" href="schedule.html">Schedule/Results</a>
+      <a class="nav-link" href="stats.html">Stats</a>
+      <a class="nav-link" href="handouts.html">Handouts</a>
+      <a class="nav-link active" href="registration.html">Registration</a>
+      <a class="nav-link" href="contact.html">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="page-header">
+    <p class="eyebrow"><span class="season-label">2026–27 Season</span></p>
+    <h1 class="page-title">Registration</h1>
+    <p class="page-sub">Register to play in the Vaughan Adult Hockey League</p>
+  </div>
+
+  <!-- Loading state -->
+  <div id="reg-loading" style="padding:2rem 0;color:var(--text-muted);font-size:15px;">Checking registration window…</div>
+
+  <!-- Closed state (hidden by default) -->
+  <div id="reg-closed" style="display:none;">
+    <div class="reg-closed">
+      <div class="reg-closed-icon">🔒</div>
+      <div class="reg-closed-title">Registration is Currently Closed</div>
+      <p class="reg-closed-sub" id="reg-closed-msg">Registration for the 2026–27 season is not currently open. If you're interested in playing next year, please reach out via the contact page and we'll keep you posted.</p>
+      <a href="contact.html" class="reg-contact-btn">Contact Us →</a>
+    </div>
+  </div>
+
+  <!-- Open state (hidden by default) -->
+  <div id="reg-open" style="display:none;">
+    <div id="reg-window-badge" class="window-badge">✅ Registration open</div>
+
+    <div class="reg-layout">
+
+      <!-- LEFT: FORM -->
+      <div>
+        <p class="section-label">Player Registration Form</p>
+        <div class="card" style="padding:1.25rem;">
+          <form id="reg-form" onsubmit="sendRegistration(event)" novalidate>
+            <div class="form-group">
+              <label for="player_name">Full Name</label>
+              <input type="text" id="player_name" name="player_name" placeholder="Jane Smith"/>
+              <span class="field-error" id="err-name"></span>
+            </div>
+            <div class="form-group">
+              <label for="player_email">Email Address</label>
+              <input type="email" id="player_email" name="player_email" placeholder="jane@example.com"/>
+              <span class="field-error" id="err-email"></span>
+            </div>
+            <div class="form-group">
+              <label for="player_phone">Phone Number</label>
+              <input type="tel" id="player_phone" name="player_phone" placeholder="416-555-0100"/>
+              <span class="field-error" id="err-phone"></span>
+            </div>
+            <div class="form-group">
+              <label for="player_address">Home Address</label>
+              <input type="text" id="player_address" name="player_address" placeholder="123 Main St, Vaughan, ON"/>
+              <span class="field-error" id="err-address"></span>
+            </div>
+            <div class="form-group">
+              <label for="player_age">Age</label>
+              <input type="number" id="player_age" name="player_age" placeholder="e.g. 34" min="18" max="99"/>
+              <span class="field-error" id="err-age"></span>
+            </div>
+            <div class="form-group">
+              <label for="player_pos">Position</label>
+              <select id="player_pos" name="player_pos">
+                <option value="">Select a position…</option>
+                <option value="Forward">Forward</option>
+                <option value="Defence">Defence</option>
+                <option value="Goalie">Goalie</option>
+              </select>
+              <span class="field-error" id="err-pos"></span>
+            </div>
+            <div class="form-group">
+              <label for="player_note">Additional Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label>
+              <input type="text" id="player_note" name="player_note" placeholder="e.g. returning player, skill level, etc."/>
+            </div>
+            <button type="submit" class="submit-btn" id="reg-submit-btn">Submit Registration</button>
+            <div class="status-msg" id="reg-status-msg"></div>
+          </form>
+        </div>
+      </div>
+
+      <!-- RIGHT: INFO -->
+      <div>
+        <p class="section-label">Registration Info</p>
+
+        <div class="info-card">
+          <div class="info-card-header">League Fee</div>
+          <div class="info-card-body">
+            <div class="info-row">
+              <span class="info-icon">💰</span>
+              <div>
+                <div class="info-label">Season Fee</div>
+                <div class="fee-badge">$600</div>
+                <div style="font-size:13px;color:var(--text-muted);margin-top:0.5rem;">Per player for the full <span class="season-label">2026–27 Season</span>.</div>
+              </div>
+            </div>
+            <div class="info-row">
+              <span class="info-icon">📲</span>
+              <div>
+                <div class="info-label">Payment Method</div>
+                <div class="info-val">Please send your e-transfer to:</div>
+                <div class="etransfer-addr">payment.vahl@gmail.com</div>
+                <div style="font-size:15px;color:var(--text);margin-top:0.5rem;line-height:1.5;">Use your <strong>full name</strong> as the transfer message. Payment is due within <strong>5 days</strong> of registration.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-header">Registration Window</div>
+          <div class="info-card-body">
+            <div class="info-row">
+              <span class="info-icon">📅</span>
+              <div>
+                <div class="info-label">Open</div>
+                <div class="info-val" id="reg-start-display">–</div>
+              </div>
+            </div>
+            <div class="info-row">
+              <span class="info-icon">🔒</span>
+              <div>
+                <div class="info-label">Closes</div>
+                <div class="info-val" id="reg-end-display">–</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-header">Questions?</div>
+          <div class="info-card-body" style="font-size:14px;color:var(--text-muted);">
+            If you have any questions about registration, fees, or the league, please <a href="contact.html" style="color:#1e40af;">contact us</a> and we'll get back to you as soon as possible.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">Vaughan Adult Hockey League · <span class="season-label">2026–27 Season</span></div>
+</footer>
+
+<script src="js/data.js"></script>
+<script>
+function toggleNav() { document.getElementById('nav-links').classList.toggle('open'); }
+
+// ── Google Apps Script URL ────────────────────────────────────
+// After deploying registration-script.gs, paste your Web App URL here
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_9GUEtBkA21X1l-ZAJTC9oDyEb3_r51yPUQzaOVto9f5EpxAW7kl9loqH5JqjbEY/exec';
+// ─────────────────────────────────────────────────────────────
+
+// ── PREVIEW MODE ──────────────────────────────────────────────
+// Set to true to preview the open registration form locally
+// WITHOUT needing the Google Sheet configured.
+// Set back to false before uploading to GitHub.
+const PREVIEW_MODE = false;
+// ─────────────────────────────────────────────────────────────
+
+function formatDate(dateStr) {
+  if (!dateStr) return '–';
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d)) return dateStr;
+  return d.toLocaleDateString('en-CA', { year:'numeric', month:'long', day:'numeric' });
+}
+
+async function init() {
+  document.getElementById('reg-loading').style.display = 'none';
+
+  // Preview mode bypasses the sheet entirely
+  if (PREVIEW_MODE) {
+    document.getElementById('reg-open').style.display = '';
+    document.getElementById('reg-window-badge').textContent = '✅ Registration open · Preview mode';
+    document.getElementById('reg-start-display').textContent = 'Preview mode';
+    document.getElementById('reg-end-display').textContent   = 'Preview mode';
+    return;
+  }
+
+  const win = await fetchRegistrationWindow();
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  // If sheet not configured, show closed state with generic message
+  if (!win || !win.StartDate || !win.EndDate) {
+    document.getElementById('reg-closed').style.display = '';
+    document.getElementById('reg-closed-msg').textContent =
+      'Registration for the 2026–27 season is not currently open. If you\'re interested in playing, please reach out via the contact page and we\'ll keep you posted.';
+    return;
+  }
+
+  const start = new Date(win.StartDate + 'T00:00:00');
+  const end   = new Date(win.EndDate   + 'T00:00:00');
+  const isOpen = today >= start && today <= end;
+
+  if (isOpen) {
+    document.getElementById('reg-open').style.display = '';
+    document.getElementById('reg-window-badge').textContent =
+      `✅ Registration open · Closes ${formatDate(win.EndDate)}`;
+    document.getElementById('reg-start-display').textContent = formatDate(win.StartDate);
+    document.getElementById('reg-end-display').textContent   = formatDate(win.EndDate);
+  } else {
+    document.getElementById('reg-closed').style.display = '';
+    const isPast = today > end;
+    if (isPast) {
+      document.getElementById('reg-closed-msg').textContent =
+        `Registration for the 2026–27 season closed on ${formatDate(win.EndDate)}. If you'd like to be considered for next year, please send us a message via the contact page.`;
+    } else {
+      document.getElementById('reg-closed-msg').textContent =
+        `Registration for the 2026–27 season opens on ${formatDate(win.StartDate)}. Check back then, or send us a message if you have any questions.`;
+    }
+  }
+}
+
+function setFieldState(id, errId, valid, msg) {
+  const el = document.getElementById(id);
+  const err = document.getElementById(errId);
+  el.classList.toggle('invalid', !valid);
+  el.classList.toggle('valid', valid);
+  if (err) err.textContent = valid ? '' : msg;
+  return valid;
+}
+
+function clearFieldState(id, errId) {
+  const el = document.getElementById(id);
+  const err = document.getElementById(errId);
+  if (el) { el.classList.remove('invalid', 'valid'); }
+  if (err) err.textContent = '';
+}
+
+function validateForm() {
+  let ok = true;
+
+  // Full Name — required, at least 2 words
+  const name = document.getElementById('player_name').value.trim();
+  ok = setFieldState('player_name', 'err-name',
+    name.length >= 2 && name.includes(' '),
+    'Please enter your full first and last name') && ok;
+
+  // Email — required, must look like an email
+  const email = document.getElementById('player_email').value.trim();
+  ok = setFieldState('player_email', 'err-email',
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
+    'Please enter a valid email address') && ok;
+
+  // Phone — required, at least 10 digits
+  const phone = document.getElementById('player_phone').value.trim();
+  const digits = phone.replace(/\D/g, '');
+  ok = setFieldState('player_phone', 'err-phone',
+    digits.length >= 10,
+    'Please enter a valid phone number (at least 10 digits)') && ok;
+
+  // Address — required, at least 10 characters
+  const address = document.getElementById('player_address').value.trim();
+  ok = setFieldState('player_address', 'err-address',
+    address.length >= 10,
+    'Please enter your full home address including city and province') && ok;
+
+  // Age — required, 18–99
+  const age = Number(document.getElementById('player_age').value);
+  ok = setFieldState('player_age', 'err-age',
+    age >= 18 && age <= 99,
+    'Please enter a valid age (18–99)') && ok;
+
+  // Position — required, must be selected
+  const pos = document.getElementById('player_pos').value;
+  ok = setFieldState('player_pos', 'err-pos',
+    pos !== '',
+    'Please select a position') && ok;
+
+  return ok;
+}
+
+// Clear error state as user types or changes a field
+['player_name','player_email','player_phone','player_address','player_age','player_pos'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => clearFieldState(id, 'err-' + id.replace('player_','')));
+  if (el) el.addEventListener('change', () => clearFieldState(id, 'err-' + id.replace('player_','')));
+});
+
+async function sendRegistration(e) {
+  e.preventDefault();
+
+  // Run validation first — stop if any field fails
+  if (!validateForm()) {
+    document.getElementById('reg-status-msg').className = 'status-msg';
+    document.getElementById('reg-status-msg').textContent = '';
+    // Scroll to first error
+    const firstInvalid = document.querySelector('.invalid');
+    if (firstInvalid) firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  const btn    = document.getElementById('reg-submit-btn');
+  const status = document.getElementById('reg-status-msg');
+  const form   = document.getElementById('reg-form');
+
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  status.className = 'status-msg';
+  status.textContent = '';
+
+  const payload = {
+    name:     document.getElementById('player_name').value,
+    email:    document.getElementById('player_email').value,
+    phone:    document.getElementById('player_phone').value,
+    address:  document.getElementById('player_address').value,
+    age:      document.getElementById('player_age').value,
+    position: document.getElementById('player_pos').value,
+    notes:    document.getElementById('player_note').value,
+  };
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    const result = await res.json();
+
+    if (result.success) {
+      status.textContent = '✓ Registration submitted! We\'ll be in touch soon. Please send your e-transfer to payment.vahl@gmail.com.';
+      status.className = 'status-msg success';
+      form.reset();
+      ['player_name','player_email','player_phone','player_address','player_age','player_pos'].forEach(id => clearFieldState(id, 'err-' + id.replace('player_','')));
+    } else {
+      throw new Error(result.error || 'Unknown error');
+    }
+  } catch (err) {
+    console.error('Submission error:', err);
+    status.textContent = '✗ Something went wrong. Please email us at communication.vahl@gmail.com to register manually.';
+    status.className = 'status-msg error';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Submit Registration';
+  }
+}
+
+init();
+
+  // Apply dynamic season label from Google Sheet
+  fetchSeason().then(s => {
+    const label = s + ' Season';
+    document.querySelectorAll('.season-label').forEach(el => el.textContent = label);
+  });
+</script>
+</body>
+</html>

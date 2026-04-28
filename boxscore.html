@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Boxscore — VAHL</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16x16.png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png"/>
+  <link rel="manifest" href="site.webmanifest"/>
+  <meta name="theme-color" content="#1e40af"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .box-header {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .box-team {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+      min-width: 120px;
+    }
+    .box-team img { width: 80px; height: 80px; }
+    .box-team-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .box-score-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      flex-shrink: 0;
+    }
+    .box-score {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 52px;
+      font-weight: 700;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .box-score-sep { color: var(--text-muted); font-size: 36px; font-weight: 300; }
+    .box-meta { font-size: 13px; color: var(--text-muted); text-align: center; }
+    .box-status {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .box-section { margin-bottom: 2rem; }
+    .box-section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .box-team-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .winner-team { color: var(--text); }
+    .loser-team  { color: var(--text-muted); }
+    @media (max-width: 640px) {
+      .box-header { flex-direction: column; align-items: center; }
+      .box-score { font-size: 40px; }
+      .box-team img { width: 60px; height: 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="container nav-inner">
+    <a class="nav-logo" href="index.html"><img src="logos/vahl-logo.jpg" alt="VAHL"/>VAHL</a>
+    <button class="nav-burger" onclick="toggleNav()" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="nav-links">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="teams.html">Teams</a>
+      <a class="nav-link" href="schedule.html">Schedule/Results</a>
+      <a class="nav-link" href="stats.html">Stats</a>
+      <a class="nav-link" href="handouts.html">Handouts</a>
+      <a class="nav-link" href="registration.html">Registration</a>
+      <a class="nav-link" href="contact.html">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="page-header" style="padding-bottom:0.5rem;">
+    <p class="eyebrow"><span class="season-label">2026–27 Season</span></p>
+    <h1 class="page-title" id="page-title">Boxscore</h1>
+  </div>
+
+  <a class="back-link" href="schedule.html" style="display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--text-muted);text-decoration:none;margin-bottom:1.25rem;" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='var(--text-muted)'">← Back to Schedule</a>
+
+  <div id="loading" style="padding:2rem 0;color:var(--text-muted);">Loading game data…</div>
+  <div id="content" style="display:none;">
+
+    <!-- GAME HEADER -->
+    <div class="box-header" id="box-header"></div>
+
+    <!-- AWAY TEAM SKATERS -->
+    <div class="box-section" id="away-skaters-section">
+      <div class="box-section-title" id="away-skaters-title"></div>
+      <div class="card" style="overflow-x:auto;">
+        <table class="data-table" style="min-width:380px;">
+          <thead>
+            <tr>
+              <th class="left" style="width:36px;">#</th>
+              <th class="left">Player</th>
+              <th style="width:44px;">G</th>
+              <th style="width:44px;">A</th>
+              <th style="width:44px;">PTS</th>
+              <th style="width:44px;">PIM</th>
+            </tr>
+          </thead>
+          <tbody id="away-skaters-body"></tbody>
+          <tfoot id="away-skaters-foot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- HOME TEAM SKATERS -->
+    <div class="box-section" id="home-skaters-section">
+      <div class="box-section-title" id="home-skaters-title"></div>
+      <div class="card" style="overflow-x:auto;">
+        <table class="data-table" style="min-width:380px;">
+          <thead>
+            <tr>
+              <th class="left" style="width:36px;">#</th>
+              <th class="left">Player</th>
+              <th style="width:44px;">G</th>
+              <th style="width:44px;">A</th>
+              <th style="width:44px;">PTS</th>
+              <th style="width:44px;">PIM</th>
+            </tr>
+          </thead>
+          <tbody id="home-skaters-body"></tbody>
+          <tfoot id="home-skaters-foot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- GOALTENDERS -->
+    <div class="box-section">
+      <div class="box-section-title">🥅 Goaltenders</div>
+      <div class="card" style="overflow-x:auto;">
+        <table class="data-table" style="min-width:480px;">
+          <thead>
+            <tr>
+              <th class="left" style="width:36px;">#</th>
+              <th class="left" style="width:160px;">Goalie</th>
+              <th class="left" style="width:120px;">Team</th>
+              <th style="width:44px;">Dec</th>
+              <th style="width:44px;">GA</th>
+              <th style="width:52px;">GAA</th>
+              <th style="width:44px;">SO</th>
+              <th style="width:44px;">PIM</th>
+            </tr>
+          </thead>
+          <tbody id="goalies-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+  <div id="no-data" style="display:none;padding:2rem 0;color:var(--text-muted);">No game data found for this game.</div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">Vaughan Adult Hockey League · <span class="season-label">2026–27 Season</span></div>
+</footer>
+
+<script src="js/data.js"></script>
+<script>
+function toggleNav() { document.getElementById('nav-links').classList.toggle('open'); }
+
+const params = new URLSearchParams(window.location.search);
+const gameDate = params.get('date') || '';
+const gameHome = params.get('home') || '';
+const gameAway = params.get('away') || '';
+
+function teamLogo(team) {
+  const logos = { 'Toronto':'logos/toronto.svg','Philadelphia':'logos/philadelphia.svg','Los Angeles':'logos/losangeles.svg','Dallas':'logos/dallas.svg' };
+  return logos[team] || 'logos/vahl-logo.jpg';
+}
+
+function skatersTable(players, bodyId, footId, teamColor) {
+  const sorted = [...players].sort((a,b) => {
+    const bPts = Number(b.G||0)+Number(b.A||0);
+    const aPts = Number(a.G||0)+Number(a.A||0);
+    return bPts - aPts;
+  });
+  const totG = sorted.reduce((s,p)=>s+Number(p.G||0),0);
+  const totA = sorted.reduce((s,p)=>s+Number(p.A||0),0);
+  const totPIM = sorted.reduce((s,p)=>s+Number(p.PIM||0),0);
+
+  document.getElementById(bodyId).innerHTML = sorted.map(p => {
+    const g=Number(p.G||0), a=Number(p.A||0), pts=g+a, pim=Number(p.PIM||0);
+    return `<tr>
+      <td class="left"><span class="jersey-num">${p.Jersey||'–'}</span></td>
+      <td class="left"><a href="player.html?name=${encodeURIComponent(p.Player||p.Name)}&team=${encodeURIComponent(p.Team)}" style="font-weight:500;color:var(--text);text-decoration:none;" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='var(--text)'">${p.Player||p.Name}</a></td>
+      <td>${g>0?`<span class="stat-hi">${g}</span>`:g}</td>
+      <td>${a>0?`<span class="stat-hi">${a}</span>`:a}</td>
+      <td>${pts>0?`<span class="stat-hi">${pts}</span>`:pts}</td>
+      <td>${pim>0?`<span style="color:#dc2626;font-weight:600;">${pim}</span>`:pim}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById(footId).innerHTML = `
+    <tr style="background:#eff6ff;">
+      <td class="left" colspan="2" style="padding:0.4rem 0.85rem;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#1e40af;">Total</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totG}</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totA}</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totG+totA}</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totPIM}</td>
+    </tr>`;
+}
+
+async function init() {
+  try {
+    const data = await loadData();
+    const { gameStats, goalieStats, goalieRoster, roster, schedule } = data;
+
+    // Find the game in schedule
+    const game = schedule.find(g =>
+      normaliseDate(g.Date) === normaliseDate(gameDate) &&
+      g.Home === gameHome && g.Away === gameAway
+    );
+
+    document.getElementById('loading').style.display = 'none';
+
+    if (!game) {
+      document.getElementById('no-data').style.display = '';
+      return;
+    }
+
+    document.title = `${gameAway} @ ${gameHome} — VAHL`;
+    document.getElementById('page-title').textContent = `${gameAway} @ ${gameHome}`;
+
+    const isTie = game.Status === 'Tie';
+    const homeScore = Number(game.HomeScore);
+    const awayScore = Number(game.AwayScore);
+    const homeWin = !isTie && homeScore > awayScore;
+    const awayWin = !isTie && awayScore > homeScore;
+
+    // Game header
+    const homeColor = TEAM_COLORS[gameHome]?.primary || '#1e40af';
+    const awayColor = TEAM_COLORS[gameAway]?.primary || '#999';
+    document.getElementById('box-header').innerHTML = `
+      <div class="box-team">
+        <a href="roster.html?team=${encodeURIComponent(gameAway)}"><img src="${teamLogo(gameAway)}" alt="${gameAway}"/></a>
+        <div class="box-team-name ${awayWin?'winner-team':'loser-team'}">${gameAway}</div>
+        <div style="font-size:12px;color:var(--text-muted);">Away</div>
+      </div>
+      <div class="box-score-center">
+        <div class="box-meta">${normaliseDate(game.Date)} · ${(game.Time||'').replace(/^.*1899.*$/i,'').trim() || game.Time || ''}</div>
+        <div class="box-score">
+          <span class="${awayWin?'winner-team':'loser-team'}">${game.AwayScore}</span>
+          <span class="box-score-sep">–</span>
+          <span class="${homeWin?'winner-team':'loser-team'}">${game.HomeScore}</span>
+        </div>
+        <div class="box-status">${game.Status}${game.Playoff === '1' ? ' · Playoff' : ''}</div>
+      </div>
+      <div class="box-team">
+        <a href="roster.html?team=${encodeURIComponent(gameHome)}"><img src="${teamLogo(gameHome)}" alt="${gameHome}"/></a>
+        <div class="box-team-name ${homeWin?'winner-team':'loser-team'}">${gameHome}</div>
+        <div style="font-size:12px;color:var(--text-muted);">Home</div>
+      </div>`;
+
+    // Normalise the game date for matching
+    const normGameDate = normaliseDate(gameDate);
+
+    // Filter game stats for this game
+    const awaySkaters = gameStats.filter(r => {
+      const d = normaliseDate(r.Date || r.GameDate || Object.values(r).find(v=>String(v).match(/[A-Z][a-z]{2}\s+\d/))||'');
+      return d === normGameDate && (r.Team||r.team) === gameAway;
+    });
+    const homeSkaters = gameStats.filter(r => {
+      const d = normaliseDate(r.Date || r.GameDate || Object.values(r).find(v=>String(v).match(/[A-Z][a-z]{2}\s+\d/))||'');
+      return d === normGameDate && (r.Team||r.team) === gameHome;
+    });
+
+    // Enrich with jersey numbers from roster
+    const rosterMap = {};
+    (roster||[]).forEach(p => { rosterMap[`${p.Name}|${p.Team}`] = p; });
+    const enrich = rows => rows.map(r => {
+      const name = r.Player || r.Name || '';
+      const team = r.Team || r.team || '';
+      const rp = rosterMap[`${name}|${team}`] || {};
+      return { ...r, Player: name, Team: team, Jersey: r.Jersey || rp.Jersey || '–' };
+    });
+
+    // Section titles
+    document.getElementById('away-skaters-title').innerHTML =
+      `<span class="box-team-dot" style="background:${awayColor};"></span>${gameAway} Skaters`;
+    document.getElementById('home-skaters-title').innerHTML =
+      `<span class="box-team-dot" style="background:${homeColor};"></span>${gameHome} Skaters`;
+
+    skatersTable(enrich(awaySkaters), 'away-skaters-body', 'away-skaters-foot', awayColor);
+    skatersTable(enrich(homeSkaters), 'home-skaters-body', 'home-skaters-foot', homeColor);
+
+    // Goalies for this game
+    const gameGoalies = (goalieStats||[]).filter(r => {
+      const d = normaliseDate(r.Date || r.GameDate || Object.values(r).find(v=>String(v).match(/[A-Z][a-z]{2}\s+\d/))||'');
+      return d === normGameDate && (r.Team === gameHome || r.Team === gameAway);
+    });
+
+    // Enrich with jersey from goalieRoster
+    const goalieRosterMap = {};
+    (goalieRoster||[]).forEach(g => { goalieRosterMap[`${g.Name}|${g.Team}`] = g; });
+
+    // Sort: away goalie first, then home
+    const sortedGoalies = [...gameGoalies].sort((a,b) => {
+      if (a.Team === gameAway && b.Team === gameHome) return -1;
+      if (a.Team === gameHome && b.Team === gameAway) return 1;
+      return 0;
+    });
+
+    document.getElementById('goalies-body').innerHTML = sortedGoalies.map(g => {
+      const name = g.Goalie || g.Name || '';
+      const gr = goalieRosterMap[`${name}|${g.Team}`] || {};
+      const jersey = g.Jersey || gr.Jersey || '–';
+      const w=Number(g.W||0), l=Number(g.L||0), t=Number(g.T||0);
+      const ga=Number(g.GA||0), so=Number(g.SO||0), pim=Number(g.PIM||0);
+      const dec = w?'W':l?'L':t?'T':'–';
+      const decColor = w?'#16a34a':l?'#dc2626':'#d97706';
+      const tColor = TEAM_COLORS[g.Team]?.primary || '#999';
+      return `<tr>
+        <td class="left"><span class="jersey-num">${jersey}</span></td>
+        <td class="left"><a href="player.html?name=${encodeURIComponent(name)}&team=${encodeURIComponent(g.Team)}&type=goalie" style="font-weight:500;color:var(--text);text-decoration:none;" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='var(--text)'">${name}</a></td>
+        <td class="left"><span style="display:inline-flex;align-items:center;gap:5px;font-size:13px;"><span style="width:8px;height:8px;border-radius:50%;background:${tColor};display:inline-block;"></span>${g.Team}</span></td>
+        <td><span style="font-weight:700;color:${decColor};">${dec}</span></td>
+        <td>${ga}</td>
+        <td><span class="stat-hi">${ga.toFixed ? ga.toFixed(0) : ga}.00</span></td>
+        <td>${so>0?`<span class="stat-hi">${so}</span>`:so}</td>
+        <td>${pim>0?`<span style="color:#dc2626;font-weight:600;">${pim}</span>`:pim}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:1.5rem;">No goalie data for this game.</td></tr>';
+
+    const hasAnyData = awaySkaters.length || homeSkaters.length || gameGoalies.length;
+    if (!hasAnyData) {
+      document.getElementById('no-data').style.display = '';
+    } else {
+      document.getElementById('content').style.display = '';
+    }
+
+  } catch(e) {
+    console.error('Boxscore error:', e);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('no-data').style.display = '';
+  }
+}
+
+init();
+
+  // Apply dynamic season label from Google Sheet
+  fetchSeason().then(s => {
+    const label = s + ' Season';
+    document.querySelectorAll('.season-label').forEach(el => el.textContent = label);
+  });
+</script>
+</body>
+</html>

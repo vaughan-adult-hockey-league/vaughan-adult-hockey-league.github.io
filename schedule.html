@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Schedule — VAHL</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16x16.png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png"/>
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167x167.png"/>
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png"/>
+  <link rel="apple-touch-icon" sizes="120x120" href="icons/icon-120x120.png"/>
+  <link rel="manifest" href="site.webmanifest"/>
+  <meta name="theme-color" content="#1e40af"/>
+  <meta name="msapplication-TileColor" content="#1e40af"/>
+  <meta name="msapplication-TileImage" content="icons/icon-144x144.png"/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="container nav-inner">
+    <a class="nav-logo" href="index.html"><img src="logos/vahl-logo.jpg" alt="VAHL"/>VAHL</a>
+    <button class="nav-burger" onclick="toggleNav()" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="nav-links">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="teams.html">Teams</a>
+      <a class="nav-link active" href="schedule.html">Schedule/Results</a>
+      <a class="nav-link" href="stats.html">Stats</a>
+      <a class="nav-link" href="handouts.html">Handouts</a>
+      <a class="nav-link" href="registration.html">Registration</a>
+      <a class="nav-link" href="contact.html">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="page-header">
+    <p class="eyebrow"><span class="season-label">2026–27 Season</span></p>
+    <h1 class="page-title">Schedule &amp; Results</h1>
+    <p class="page-sub" id="schedule-sub">Loading…</p>
+  </div>
+
+  <div class="filter-row" id="filter-row">
+    <button class="f-btn active" onclick="setFilter('All')">All teams</button>
+    <button class="f-btn" onclick="setFilter('Toronto')">Toronto</button>
+    <button class="f-btn" onclick="setFilter('Philadelphia')">Philadelphia</button>
+    <button class="f-btn" onclick="setFilter('Los Angeles')">Los Angeles</button>
+    <button class="f-btn" onclick="setFilter('Dallas')">Dallas</button>
+  </div>
+
+  <p class="section-label">Upcoming</p>
+  <div class="card" style="margin-bottom:1.5rem;" id="upcoming-card"></div>
+
+  <p class="section-label">Results</p>
+  <div class="card" id="results-card"></div>
+</main>
+
+<footer class="site-footer"><div class="container">Vaughan Adult Hockey League · <span class="season-label">2026–27 Season</span></div></footer>
+
+<script src="js/data.js"></script>
+<script>
+function toggleNav() { document.getElementById('nav-links').classList.toggle('open'); }
+
+let allGames = [];
+let activeFilter = 'All';
+
+const params = new URLSearchParams(window.location.search);
+if (params.get('team')) activeFilter = params.get('team');
+
+function shortDate(d) {
+    if (!d) return d;
+    return String(d).replace(/,?\s*\d{4}$/, '').trim();
+  }
+  function teamLink(team, cls, muted) {
+  const style = muted
+    ? `font-size:13px;color:var(--text-muted);text-decoration:none;`
+    : `font-size:13px;text-decoration:none;`;
+  return `<a href="roster.html?team=${encodeURIComponent(team)}" class="${cls||''}" style="${style}" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='${muted?'var(--text-muted)':''}'">${team}</a>`;
+}
+
+function gameRow(g, badge) {
+  const isUpcoming = g.Status === 'Upcoming';
+  const awayWin = !isUpcoming && !( g.Status==='Tie') && Number(g.AwayScore) > Number(g.HomeScore);
+  const homeWin = !isUpcoming && !(g.Status==='Tie') && Number(g.HomeScore) > Number(g.AwayScore);
+  const awayColor = TEAM_COLORS[g.Away]?.primary || '#999';
+  const homeColor = TEAM_COLORS[g.Home]?.primary || '#999';
+  const dot = (color, side) => `<span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block;margin-${side}:6px;"></span>`;
+
+  if (isUpcoming) {
+    return `<div class="game-row schedule-game-row">
+      <div class="game-date-col"><strong>${g.Date}</strong>${g.Time}</div>
+      <div class="game-team-col away">${teamLink(g.Away,'',true)}${dot(awayColor,'left')}</div>
+      <div class="game-score" style="font-size:14px;color:var(--text-muted);font-weight:400;font-family:'Barlow',sans-serif;">vs</div>
+      <div class="game-team-col">${dot(homeColor,'right')}${teamLink(g.Home,'',true)}</div>
+      <div class="game-status"><span class="badge badge-upcoming">${badge}</span></div>
+    </div>`;
+  }
+
+  const boxUrl = `boxscore.html?date=${encodeURIComponent(g.Date)}&home=${encodeURIComponent(g.Home)}&away=${encodeURIComponent(g.Away)}`;
+  return `<a href="${boxUrl}" style="text-decoration:none;display:block;" class="game-row-link">
+    <div class="game-row schedule-game-row" style="cursor:pointer;">
+      <div class="game-date-col"><strong>${g.Date}</strong></div>
+      <div class="game-team-col away"><span class="${awayWin?'winner':'loser'}" style="font-size:13px;">${g.Away}</span>${dot(awayColor,'left')}</div>
+      <div class="game-score"><span class="${awayWin?'winner':'loser'}">${g.AwayScore}</span><span class="score-sep">–</span><span class="${homeWin?'winner':'loser'}">${g.HomeScore}</span></div>
+      <div class="game-team-col">${dot(homeColor,'right')}<span class="${homeWin?'winner':'loser'}" style="font-size:13px;">${g.Home}</span></div>
+      <div class="game-status"><span class="badge badge-${g.Status==='Tie'?'tie':'final'}">${g.Status}</span></div>
+    </div>
+  </a>`;
+}
+
+function render() {
+  const filtered = activeFilter === 'All' ? allGames : allGames.filter(g => g.Home === activeFilter || g.Away === activeFilter);
+  const upcoming = filtered.filter(g => g.Status === 'Upcoming');
+  const results  = filtered.filter(g => g.Status !== 'Upcoming').reverse();
+
+  // Upcoming/Soon: same date as first = Upcoming, later dates = Soon
+  const firstDate = upcoming.length ? upcoming[0].Date : null;
+  document.getElementById('upcoming-card').innerHTML = upcoming.length
+    ? upcoming.map(g => gameRow(g, g.Date === firstDate ? 'Upcoming' : 'Soon')).join('')
+    : '<p style="padding:1rem;color:var(--text-muted);font-size:13px;">No upcoming games.</p>';
+  document.getElementById('results-card').innerHTML  = results.length
+    ? results.map(g => gameRow(g, '')).join('')
+    : '<p style="padding:1rem;color:var(--text-muted);font-size:13px;">No results yet.</p>';
+
+  document.querySelectorAll('#filter-row .f-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.trim().replace(' teams','') === (activeFilter === 'All' ? 'All' : activeFilter) || (btn.textContent.trim() === 'All teams' && activeFilter === 'All'));
+  });
+}
+
+window.setFilter = function(team) { activeFilter = team; render(); };
+
+async function init() {
+  const { schedule } = await loadData();
+  allGames = schedule;
+  const played = schedule.filter(g => g.Status !== 'Upcoming').length;
+  const remaining = schedule.filter(g => g.Status === 'Upcoming').length;
+  document.getElementById('schedule-sub').textContent = `${played} games played · ${remaining} remaining`;
+  render();
+}
+init();
+
+  // Apply dynamic season label from Google Sheet
+  fetchSeason().then(s => {
+    const label = s + ' Season';
+    document.querySelectorAll('.season-label').forEach(el => el.textContent = label);
+  });
+</script>
+</body>
+</html>

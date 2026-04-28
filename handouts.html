@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Handouts — VAHL</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16x16.png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png"/>
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167x167.png"/>
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png"/>
+  <link rel="apple-touch-icon" sizes="120x120" href="icons/icon-120x120.png"/>
+  <link rel="manifest" href="site.webmanifest"/>
+  <meta name="theme-color" content="#1e40af"/>
+  <meta name="msapplication-TileColor" content="#1e40af"/>
+  <meta name="msapplication-TileImage" content="icons/icon-144x144.png"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .handouts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 640px) {
+      .handouts-grid { grid-template-columns: 1fr; }
+    }
+    .handout-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .handout-card:hover {
+      border-color: #93c5fd;
+      box-shadow: 0 2px 12px rgba(30,64,175,0.07);
+    }
+    .handout-icon {
+      width: 48px;
+      height: 48px;
+      background: #eff6ff;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .handout-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .handout-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      flex: 1;
+    }
+    .handout-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'Barlow', sans-serif;
+      color: #1e40af;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius-sm);
+      padding: 8px 16px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, border-color 0.15s;
+      align-self: flex-start;
+    }
+    .handout-btn:hover {
+      background: #dbeafe;
+      border-color: #93c5fd;
+    }
+    .handout-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      align-self: flex-start;
+    }
+    .notice {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 1.1rem;
+      font-size: 14px;
+      color: #1e40af;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="container nav-inner">
+    <a class="nav-logo" href="index.html"><img src="logos/vahl-logo.jpg" alt="VAHL"/>VAHL</a>
+    <button class="nav-burger" onclick="toggleNav()" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="nav-links">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="teams.html">Teams</a>
+      <a class="nav-link" href="schedule.html">Schedule/Results</a>
+      <a class="nav-link" href="stats.html">Stats</a>
+      <a class="nav-link active" href="handouts.html">Handouts</a>
+      <a class="nav-link" href="registration.html">Registration</a>
+      <a class="nav-link" href="contact.html">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="page-header">
+    <p class="eyebrow"><span class="season-label">2026–27 Season</span></p>
+    <h1 class="page-title">Handouts</h1>
+    <p class="page-sub">League documents, forms, and information for all players</p>
+  </div>
+
+  <div class="notice">
+    <span>📋</span>
+    <span>Please read all documents and return any signed forms to your team captain or league coordinator before your first game.</span>
+  </div>
+
+  <div class="handouts-grid">
+
+    <!-- Welcome -->
+    <div class="handout-card">
+      <div class="handout-icon">👋</div>
+      <span class="handout-tag">General</span>
+      <div class="handout-title">Welcome to the VAHL</div>
+      <p class="handout-desc">An introduction to the Vaughan Adult Hockey League — league overview, expectations, key contacts, and everything you need to know before hitting the ice.</p>
+      <a href="handouts/vahl-welcome.pdf" class="handout-btn" target="_blank">
+        ⬇ Download PDF
+      </a>
+    </div>
+
+    <!-- Rules -->
+    <div class="handout-card">
+      <div class="handout-icon">📖</div>
+      <span class="handout-tag">Required Reading</span>
+      <div class="handout-title">League Rules</div>
+      <p class="handout-desc">Official rules of the Vaughan Adult Hockey League including conduct, penalties, game format, and playoff eligibility. All players must read and acknowledge these rules.</p>
+      <a href="handouts/vahl-rules.pdf" class="handout-btn" target="_blank">
+        ⬇ Download PDF
+      </a>
+    </div>
+
+    <!-- Waiver & Release -->
+    <div class="handout-card">
+      <div class="handout-icon">✍️</div>
+      <span class="handout-tag">Signature Required</span>
+      <div class="handout-title">Release, Waiver &amp; Indemnity Form</div>
+      <p class="handout-desc">This form must be signed by all participating players prior to their first game. Download, print, sign, and return to your team captain or league coordinator.</p>
+      <a href="handouts/vahl-waiver.pdf" class="handout-btn" target="_blank">
+        ⬇ Download PDF
+      </a>
+    </div>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">Vaughan Adult Hockey League · <span class="season-label">2026–27 Season</span></div>
+</footer>
+
+<script>
+function toggleNav() {
+  document.getElementById('nav-links').classList.toggle('open');
+}
+</script>
+</body>
+</html>

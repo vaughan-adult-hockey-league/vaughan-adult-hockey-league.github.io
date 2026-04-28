@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Player Profile — VAHL</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16x16.png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png"/>
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167x167.png"/>
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png"/>
+  <link rel="apple-touch-icon" sizes="120x120" href="icons/icon-120x120.png"/>
+  <link rel="manifest" href="site.webmanifest"/>
+  <meta name="theme-color" content="#1e40af"/>
+  <meta name="msapplication-TileColor" content="#1e40af"/>
+  <meta name="msapplication-TileImage" content="icons/icon-144x144.png"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .player-hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .player-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      flex-shrink: 0;
+      color: #fff;
+    }
+    .player-hero-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+    .player-hero-sub {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+    .player-hero-stats {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .phs { font-size: 13px; color: var(--text-muted); }
+    .phs strong {
+      display: block;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: var(--text-muted);
+      text-decoration: none;
+      margin-bottom: 1.25rem;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: #1e40af; }
+    .no-games {
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+    .season-summary {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      font-size: 14px;
+      color: #1e40af;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="container nav-inner">
+    <a class="nav-logo" href="index.html"><img src="logos/vahl-logo.jpg" alt="VAHL"/>VAHL</a>
+    <button class="nav-burger" onclick="toggleNav()" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="nav-links">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="teams.html">Teams</a>
+      <a class="nav-link" href="schedule.html">Schedule/Results</a>
+      <a class="nav-link" href="stats.html">Stats</a>
+      <a class="nav-link" href="handouts.html">Handouts</a>
+      <a class="nav-link" href="registration.html">Registration</a>
+      <a class="nav-link" href="contact.html">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="page-header" style="padding-bottom:0.5rem;">
+    <p class="eyebrow"><span class="season-label">2026–27 Season</span></p>
+    <h1 class="page-title" id="page-title">Player Profile</h1>
+  </div>
+
+  <a class="back-link" id="back-link" href="roster.html">← Back to Roster</a>
+
+  <div id="player-hero" class="player-hero" style="display:none;"></div>
+  <div id="loading" style="padding:1.5rem 0;color:var(--text-muted);">Loading player data…</div>
+
+  <!-- Skater game log -->
+  <div id="skater-section" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem;">
+      <p class="section-label" style="margin:0;">Season game log</p>
+      <div class="season-toggle" style="margin:0;" id="player-season-toggle">
+        <button class="s-btn active" onclick="setPlayerSeason('regular',this)">Regular Season</button>
+        <button class="s-btn" onclick="setPlayerSeason('playoff',this)">Playoffs</button>
+        <button class="s-btn" onclick="setPlayerSeason('all',this)">Combined</button>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;margin-bottom:2rem;">
+      <table class="data-table" style="min-width:420px;">
+        <thead>
+          <tr>
+            <th class="left" style="width:80px;">Date</th>
+            <th class="left" style="width:80px;">Home</th>
+            <th style="width:24px;font-size:11px;color:var(--color-text-secondary);">vs</th>
+            <th class="left" style="width:80px;">Away</th>
+            <th style="width:48px;">G</th>
+            <th style="width:48px;">A</th>
+            <th style="width:48px;">PTS</th>
+            <th style="width:48px;">PIM</th>
+          </tr>
+        </thead>
+        <tbody id="skater-gamelog"></tbody>
+        <tfoot id="skater-totals"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- Goalie game log -->
+  <div id="goalie-section" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem;">
+      <p class="section-label" style="margin:0;">Season game log</p>
+      <div class="season-toggle" style="margin:0;" id="player-season-toggle">
+        <button class="s-btn active" onclick="setPlayerSeason('regular',this)">Regular Season</button>
+        <button class="s-btn" onclick="setPlayerSeason('playoff',this)">Playoffs</button>
+        <button class="s-btn" onclick="setPlayerSeason('all',this)">Combined</button>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;margin-bottom:2rem;">
+      <table class="data-table" style="min-width:480px;">
+        <thead>
+          <tr>
+            <th class="left" style="width:80px;">Date</th>
+            <th class="left" style="width:80px;">Home</th>
+            <th style="width:24px;font-size:11px;">vs</th>
+            <th class="left" style="width:80px;">Away</th>
+            <th style="width:44px;">Result</th>
+            <th style="width:44px;">GA</th>
+            <th style="width:52px;">GAA</th>
+            <th style="width:44px;">SO</th>
+            <th style="width:44px;">PIM</th>
+          </tr>
+        </thead>
+        <tbody id="goalie-gamelog"></tbody>
+        <tfoot id="goalie-totals"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div id="no-data" style="display:none;" class="no-games">No game data found for this player yet.</div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">Vaughan Adult Hockey League · <span class="season-label">2026–27 Season</span></div>
+</footer>
+
+<script src="js/data.js"></script>
+<script>
+function toggleNav() { document.getElementById('nav-links').classList.toggle('open'); }
+
+// Read URL params
+const params  = new URLSearchParams(window.location.search);
+const pName   = params.get('name')  || '';
+const pTeam   = params.get('team')  || '';
+const pType   = params.get('type')  || 'skater'; // 'skater' or 'goalie'
+
+// Update back link to return to the correct team roster
+document.getElementById('back-link').href = `roster.html?team=${encodeURIComponent(pTeam)}`;
+
+function resultBadge(w, l, t) {
+  if (Number(w)) return '<span style="color:#16a34a;font-weight:700;">W</span>';
+  if (Number(l)) return '<span style="color:#dc2626;font-weight:700;">L</span>';
+  if (Number(t)) return '<span style="color:#d97706;font-weight:700;">T</span>';
+  return '–';
+}
+
+function totalsRow(cols, vals) {
+  const cells = cols.map((v, i) =>
+    `<td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:${i < 4 ? 'left' : 'center'};color:#1e40af;">${v}</td>`
+  ).join('');
+  return `<tr style="background:#eff6ff;">${cells}</tr>`;
+}
+
+
+function normDate(val) { return normaliseDate(val); }
+function getDate(r) { return r.Date || r.GameDate || r["Game Date"] || r.date || ""; }
+
+let _playerRawGames = [];
+let _playerRawGoalieGames = [];
+let _playerScheduleLookup = {};
+let _playerSeason = 'regular';
+let _playerIsGoalie = false;
+
+function setPlayerSeason(type, btn) {
+  _playerSeason = type;
+  document.querySelectorAll('.season-toggle .s-btn').forEach(b => {
+    b.className = 's-btn' + (b === btn ? (type === 'playoff' ? ' active-playoff' : type === 'all' ? ' active-combined' : ' active') : '');
+  });
+  if (_playerIsGoalie) renderGoalieLog();
+  else renderSkaterLog();
+}
+
+function filterGames(games) {
+  if (_playerSeason === 'all') return games;
+  return games.filter(r => {
+    const dateRaw = r.Date || r.GameDate || r['Game Date'] || '';
+    const dateStr = normDate(dateRaw);
+    const team = r.Team || r.team || pTeam;
+    const gameInfo = _playerScheduleLookup[`${dateStr}|${team}`] || {};
+    const isPlayoff = gameInfo.playoff === true;
+    return _playerSeason === 'playoff' ? isPlayoff : !isPlayoff;
+  });
+}
+
+async function init() {
+  let gameStats = [], goalieStats = [], roster = [], goalieRoster = [];
+
+  try {
+    const data = await loadData();
+    gameStats    = data.gameStats    || [];
+    goalieStats  = data.goalieStats  || [];
+    roster       = data.roster       || [];
+    goalieRoster = data.goalieRoster || [];
+
+    (data.schedule || []).filter(g => g.Status !== 'Upcoming').forEach(g => {
+      const d = normDate(g.Date);
+      const isPlayoff = Number(g.Playoff || 0) === 1;
+      _playerScheduleLookup[`${d}|${g.Home}`] = { home: g.Home, away: g.Away, playoff: isPlayoff };
+      _playerScheduleLookup[`${d}|${g.Away}`] = { home: g.Home, away: g.Away, playoff: isPlayoff };
+    });
+  } catch(e) {
+    console.warn('Player: error loading data', e);
+  } finally {
+    // Guarantee loading always hides no matter what
+    const loadingEl = document.getElementById('loading');
+    if (loadingEl) loadingEl.style.display = 'none';
+  }
+
+  // ── SKATER ──────────────────────────────────────────────────
+  if (pType !== 'goalie') {
+    _playerIsGoalie = false;
+    _playerRawGames = gameStats.filter(r =>
+      (r.Player || r.Name || '') === pName && (r.Team || '') === pTeam
+    ).sort((a,b) => String(getDate(a)).localeCompare(String(getDate(b))));
+
+    const info = roster.find(r => r.Name === pName && r.Team === pTeam) || {};
+    const allGames = _playerRawGames;
+    const totG   = allGames.reduce((s,r) => s + Number(r.G  ||0), 0);
+    const totA   = allGames.reduce((s,r) => s + Number(r.A  ||0), 0);
+    const totPTS = totG + totA;
+    const totPIM = allGames.reduce((s,r) => s + Number(r.PIM||0), 0);
+
+    const color = TEAM_COLORS[pTeam]?.primary || '#1e40af';
+    document.title = `${pName} — VAHL`;
+    document.getElementById('page-title').textContent = pName;
+    document.getElementById('player-hero').style.display = '';
+    document.getElementById('player-hero').innerHTML = `
+      <div class="player-avatar" style="background:${color};">
+        ${(info.Jersey || '?')}
+      </div>
+      <div style="flex:1;">
+        <div class="player-hero-name">${pName}</div>
+        <div class="player-hero-sub">
+          ${pTeam} &nbsp;·&nbsp; ${info.Pos || 'F'} &nbsp;·&nbsp; #${info.Jersey || '–'}
+        </div>
+        <div class="player-hero-stats">
+          <div class="phs"><strong>${totG}</strong>Goals</div>
+          <div class="phs"><strong>${totA}</strong>Assists</div>
+          <div class="phs"><strong>${totPTS}</strong>Points</div>
+          <div class="phs"><strong>${totPIM}</strong>PIM</div>
+          <div class="phs"><strong>${allGames.length}</strong>Games</div>
+        </div>
+      </div>`;
+
+    if (!allGames.length) {
+      document.getElementById('no-data').style.display = '';
+      return;
+    }
+    document.getElementById('skater-section').style.display = '';
+    renderSkaterLog();
+
+  // ── GOALIE ──────────────────────────────────────────────────
+  } else {
+    _playerIsGoalie = true;
+    _playerRawGoalieGames = goalieStats.filter(r =>
+      (r.Goalie || r.Name || '') === pName && (r.Team || '') === pTeam
+    ).sort((a,b) => String(getDate(a)).localeCompare(String(getDate(b))));
+
+    const info = goalieRoster.find(r => r.Name === pName && r.Team === pTeam) || {};
+    const allGames = _playerRawGoalieGames;
+    const totW   = allGames.reduce((s,r) => s + Number(r.W  ||0), 0);
+    const totL   = allGames.reduce((s,r) => s + Number(r.L  ||0), 0);
+    const totT   = allGames.reduce((s,r) => s + Number(r.T  ||0), 0);
+    const totGA  = allGames.reduce((s,r) => s + Number(r.GA ||0), 0);
+    const totSO  = allGames.reduce((s,r) => s + Number(r.SO ||0), 0);
+    const totGP  = totW + totL + totT;
+    const totGAA = totGP > 0 ? (totGA / totGP).toFixed(2) : '0.00';
+
+    const color = TEAM_COLORS[pTeam]?.primary || '#1e40af';
+    document.title = `${pName} — VAHL`;
+    document.getElementById('page-title').textContent = pName;
+    document.getElementById('player-hero').style.display = '';
+    document.getElementById('player-hero').innerHTML = `
+      <div class="player-avatar" style="background:${color};">
+        ${info.Jersey || '?'}
+      </div>
+      <div style="flex:1;">
+        <div class="player-hero-name">${pName}</div>
+        <div class="player-hero-sub">
+          ${pTeam} &nbsp;·&nbsp; Goalie &nbsp;·&nbsp; #${info.Jersey || '–'}
+        </div>
+        <div class="player-hero-stats">
+          <div class="phs"><strong>${totW}</strong>Wins</div>
+          <div class="phs"><strong>${totL}</strong>Losses</div>
+          <div class="phs"><strong>${totT}</strong>Ties</div>
+          <div class="phs"><strong>${totGA}</strong>GA</div>
+          <div class="phs"><strong>${totGAA}</strong>GAA</div>
+          <div class="phs"><strong>${totSO}</strong>SO</div>
+        </div>
+      </div>`;
+
+    if (!allGames.length) {
+      document.getElementById('no-data').style.display = '';
+      return;
+    }
+    document.getElementById('goalie-section').style.display = '';
+    renderGoalieLog();
+  }
+}
+
+function renderSkaterLog() {
+  const games = filterGames(_playerRawGames);
+  const totG   = games.reduce((s,r) => s + Number(r.G  ||0), 0);
+  const totA   = games.reduce((s,r) => s + Number(r.A  ||0), 0);
+  const totPTS = totG + totA;
+  const totPIM = games.reduce((s,r) => s + Number(r.PIM||0), 0);
+
+  if (!games.length) {
+    document.getElementById('skater-gamelog').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:1.5rem;">No ' + _playerSeason + ' season games found.</td></tr>';
+    document.getElementById('skater-totals').innerHTML = '';
+    return;
+  }
+
+  document.getElementById('skater-gamelog').innerHTML = games.map(r => {
+    const g = Number(r.G||0), a = Number(r.A||0), pts = g+a, pim = Number(r.PIM||0);
+    const dateStr = normDate(getDate(r));
+    const gameInfo = _playerScheduleLookup[`${dateStr}|${pTeam}`] || {};
+    const home = gameInfo.home || pTeam;
+    const away = gameInfo.away || '–';
+    const teamCell = (t) => t === '–' ? '–' : `
+      <a href="roster.html?team=${encodeURIComponent(t)}" style="display:inline-flex;align-items:center;gap:5px;font-size:14px;color:var(--text);text-decoration:none;" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='var(--text)'">
+        <span style="width:8px;height:8px;border-radius:50%;background:${TEAM_COLORS[t]?.primary||'#999'};display:inline-block;flex-shrink:0;"></span>${t}
+      </a>`;
+    return `<tr>
+      <td class="left" style="font-size:14px;">${dateStr}</td>
+      <td class="left">${teamCell(home)}</td>
+      <td style="font-size:12px;color:var(--text-muted);">vs</td>
+      <td class="left">${teamCell(away)}</td>
+      <td>${g > 0 ? `<span class="stat-hi">${g}</span>` : g}</td>
+      <td>${a > 0 ? `<span class="stat-hi">${a}</span>` : a}</td>
+      <td>${pts > 0 ? `<span class="stat-hi">${pts}</span>` : pts}</td>
+      <td>${pim > 0 ? `<span style="color:#dc2626;font-weight:600;">${pim}</span>` : pim}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('skater-totals').innerHTML = `
+    <tr style="background:#eff6ff;">
+      <td class="left" colspan="4" style="padding:0.4rem 0.85rem;font-size:14px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#1e40af;">Season Totals</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totG}</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totA}</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totPTS}</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totPIM}</td>
+    </tr>`;
+}
+
+function renderGoalieLog() {
+  const games = filterGames(_playerRawGoalieGames);
+  const totW   = games.reduce((s,r) => s + Number(r.W  ||0), 0);
+  const totL   = games.reduce((s,r) => s + Number(r.L  ||0), 0);
+  const totT   = games.reduce((s,r) => s + Number(r.T  ||0), 0);
+  const totGA  = games.reduce((s,r) => s + Number(r.GA ||0), 0);
+  const totSO  = games.reduce((s,r) => s + Number(r.SO ||0), 0);
+  const totPIM = games.reduce((s,r) => s + Number(r.PIM||0), 0);
+  const totGP  = totW + totL + totT;
+  const totGAA = totGP > 0 ? (totGA / totGP).toFixed(2) : '0.00';
+
+  if (!games.length) {
+    document.getElementById('goalie-gamelog').innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:1.5rem;">No ' + _playerSeason + ' season games found.</td></tr>';
+    document.getElementById('goalie-totals').innerHTML = '';
+    return;
+  }
+
+  document.getElementById('goalie-gamelog').innerHTML = games.map(r => {
+    const ga = Number(r.GA||0), so = Number(r.SO||0), pim = Number(r.PIM||0);
+    const gp = Number(r.W||0) + Number(r.L||0) + Number(r.T||0);
+    const gaa = gp > 0 ? (ga / gp).toFixed(2) : '–';
+    const dateStr = normDate(getDate(r));
+    const gameInfo = _playerScheduleLookup[`${dateStr}|${pTeam}`] || {};
+    const home = gameInfo.home || pTeam;
+    const away = gameInfo.away || '–';
+    const teamCell = (t) => t === '–' ? '–' : `
+      <a href="roster.html?team=${encodeURIComponent(t)}" style="display:inline-flex;align-items:center;gap:5px;font-size:14px;color:var(--text);text-decoration:none;" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='var(--text)'">
+        <span style="width:8px;height:8px;border-radius:50%;background:${TEAM_COLORS[t]?.primary||'#999'};display:inline-block;flex-shrink:0;"></span>${t}
+      </a>`;
+    return `<tr>
+      <td class="left" style="font-size:14px;">${dateStr}</td>
+      <td class="left">${teamCell(home)}</td>
+      <td style="font-size:12px;color:var(--text-muted);">vs</td>
+      <td class="left">${teamCell(away)}</td>
+      <td>${resultBadge(r.W, r.L, r.T)}</td>
+      <td>${ga}</td>
+      <td><span class="stat-hi">${gaa}</span></td>
+      <td>${so > 0 ? `<span class="stat-hi">${so}</span>` : so}</td>
+      <td>${pim > 0 ? `<span style="color:#dc2626;font-weight:600;">${pim}</span>` : pim}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('goalie-totals').innerHTML = `
+    <tr style="background:#eff6ff;">
+      <td class="left" colspan="4" style="padding:0.4rem 0.85rem;font-size:14px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#1e40af;">Season Totals</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totW}W ${totL}L${totT>0?' '+totT+'T':''}</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totGA}</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totGAA}</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totSO}</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totPIM}</td>
+    </tr>`;
+}
+
+init();
+
+  // Apply dynamic season label from Google Sheet
+  fetchSeason().then(s => {
+    const label = s + ' Season';
+    document.querySelectorAll('.season-label').forEach(el => el.textContent = label);
+  });
+</script>
+</body>
+</html>
