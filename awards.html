@@ -376,7 +376,7 @@ async function buildPlayoffAwards(data, rrData) {
       : { winner: connWinners.map(p => `<div style="margin-bottom:4px;">${teamDotHtml(p.Team)}${playerLink(p.Name, p.Team)}<span style="font-size:13px;color:var(--text-muted);margin-left:6px;">${p.PTS} pts (${p.G}G + ${p.A}A) · ${p.PIM} PIM · ${p.Team}</span></div>`).join(''),
           sub: 'Tied award — shared by ' + connWinners.length + ' players' };
     html += awardCard('🌟', 'Conn Smythe Trophy',
-      'Awarded to the most valuable player of the playoffs. Tiebreaker: most goals, then fewest penalty minutes.',
+      'Awarded to the most valuable player of the playoffs with the most points. Tiebreaker: most goals, then fewest penalty minutes.',
       w.winner, w.sub);
   } else {
     html += awardCard('🌟', 'Conn Smythe Trophy',

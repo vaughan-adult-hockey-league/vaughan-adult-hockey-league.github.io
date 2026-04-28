@@ -398,7 +398,12 @@ async function fetchChampion() {
 
 async function fetchAnnouncement() {
   const misc = await fetchMisc();
-  return { text: misc['Announcement'] || '', image: misc['Image'] || '' };
+  return {
+    text:     misc['Announcement'] || '',
+    image:    misc['Image'] || '',
+    fontSize: misc['Font Size'] || '15',
+    align:    misc['Align'] || 'left',
+  };
 }
 function teamDot(team, size = 8) {
   const color = TEAM_COLORS[team]?.primary || '#999';

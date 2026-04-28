@@ -65,9 +65,16 @@ Sheet ID: already configured in js/data.js
 ### Misc tab
 Single tab with four columns — headers in row 1, values in row 2:
 
-| Current Season | Champion | Announcement | Image |
-|---|---|---|---|
-| 2025-26 | Los Angeles | Welcome to the 2025-26 VAHL season! | 2025-26_Champions.jpeg |
+| Current Season | Champion | Announcement | Image | Font Size | Align |
+|---|---|---|---|---|---|
+| 2025-26 | Los Angeles | Welcome to... | 2025-26_Champions.jpeg | 15 | left |
+
+- **Current Season** — displayed throughout the site as the season label
+- **Champion** — team name shown in the VAHL Champions playoff award
+- **Announcement** — text shown on the Home page. Use `\n` in the cell for line breaks. Leave blank for no announcement
+- **Image** — filename from the `images/` folder shown below the announcement. Leave blank for none
+- **Font Size** — font size in pixels for the announcement text (default: 15)
+- **Align** — text alignment: `left`, `center`, or `right` (default: left)
 
 - **Current Season** — displayed throughout the site as the season label
 - **Champion** — team name shown in the VAHL Champions playoff award

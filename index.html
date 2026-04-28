@@ -244,12 +244,16 @@ async function init() {
   // Show announcement if present
   if (announcement.text) {
     const banner = document.getElementById('announcement-banner');
+    const fontSize = Number(announcement.fontSize) || 15;
+    const align = ['left','center','right'].includes(announcement.align) ? announcement.align : 'left';
+    // Convert \n literal in sheet text to <br> for line breaks
+    const formattedText = announcement.text.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
     const imgHtml = announcement.image
-      ? `<img src="images/${announcement.image}" alt="Announcement" style="width:100%;max-height:420px;object-fit:cover;border-radius:var(--radius);margin-top:1rem;" onerror="this.style.display='none'"/>`
+      ? `<img src="images/${announcement.image}" alt="Announcement" class="announcement-img" onerror="this.style.display='none'"/>`
       : '';
     banner.innerHTML = `
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;">
-        <p style="font-size:15px;color:var(--text);margin:0;line-height:1.6;">${announcement.text}</p>
+        <p style="font-size:${fontSize}px;color:var(--text);margin:0;line-height:1.6;text-align:${align};">${formattedText}</p>
         ${imgHtml}
       </div>`;
     banner.style.display = '';
