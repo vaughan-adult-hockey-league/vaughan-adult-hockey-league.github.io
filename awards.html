@@ -105,7 +105,7 @@
     <div class="nav-links" id="nav-links">
       <a class="nav-link" href="index.html">Home</a>
       <a class="nav-link" href="teams.html">Teams</a>
-      <a class="nav-link" href="schedule.html">Schedule/Results</a>
+      <a class="nav-link" href="schedule.html">Schedule</a>
       <a class="nav-link" href="stats.html">Stats</a>
       <a class="nav-link active" href="awards.html"><span style="display:inline-flex;align-items:center;gap:4px;">🏆 Awards</span></a>
       <a class="nav-link" href="handouts.html">Handouts</a>
@@ -207,49 +207,60 @@ function buildRegularAwards(data) {
   function winnersHtml(winners, statLine) {
     if (winners.length === 1) {
       const p = winners[0];
-      return {
-        winner: `${teamDotHtml(p.Team)}${playerLink(p.Name, p.Team)}`,
-        sub: statLine(p)
-      };
+      return { winner: `${teamDotHtml(p.Team)}${playerLink(p.Name, p.Team)}`, sub: statLine(p) };
     }
-    // Multiple tied winners
     const winnerStr = winners.map(p =>
       `<div style="margin-bottom:4px;">${teamDotHtml(p.Team)}${playerLink(p.Name, p.Team)}<span style="font-size:13px;color:var(--text-muted);margin-left:6px;">${statLine(p)}</span></div>`
     ).join('');
     return { winner: winnerStr, sub: 'Tied award — shared by ' + winners.length + ' players' };
   }
 
-  // 2. Maurice "Rocket" Richard Trophy — Most goals (ties shared)
-  const sortedGoals = [...skaters].sort((a,b) => b.G - a.G || b.PTS - a.PTS);
+  // Helper: apply PIM tiebreaker then return all still-tied players
+  function breakTieByPIM(candidates) {
+    const minPIM = Math.min(...candidates.map(p => Number(p.PIM || 0)));
+    return candidates.filter(p => Number(p.PIM || 0) === minPIM);
+  }
+
+  // 2. Maurice "Rocket" Richard Trophy — Most goals, tiebreaker: fewest PIM
+  const sortedGoals = [...skaters].sort((a,b) => b.G - a.G);
   const topGoalsVal = sortedGoals[0]?.G || 0;
-  const topGoalsWinners = sortedGoals.filter(p => p.G === topGoalsVal && topGoalsVal > 0);
+  const topGoalsTied = sortedGoals.filter(p => p.G === topGoalsVal && topGoalsVal > 0);
+  const topGoalsWinners = breakTieByPIM(topGoalsTied);
   if (topGoalsWinners.length) {
-    const w = winnersHtml(topGoalsWinners, p => `${p.G}G · ${p.PTS} pts · ${p.Team}`);
+    const w = winnersHtml(topGoalsWinners, p => `${p.G}G · ${p.PIM} PIM · ${p.Team}`);
     html += awardCard('🎯', 'Maurice "Rocket" Richard Trophy',
-      'Awarded to the player(s) with the most goals in the regular season.',
+      'Awarded to the player(s) with the most goals. Tiebreaker: fewest penalty minutes.',
       w.winner, w.sub);
   }
 
-  // 3. Art Ross Trophy — Most points (ties shared)
-  const sortedPts = [...skaters].sort((a,b) => b.PTS - a.PTS || b.G - a.G);
+  // 3. Art Ross Trophy — Most points, tiebreaker: most goals then fewest PIM
+  const sortedPts = [...skaters].sort((a,b) => b.PTS - a.PTS);
   const topPtsVal = sortedPts[0]?.PTS || 0;
-  const topPtsWinners = sortedPts.filter(p => p.PTS === topPtsVal && topPtsVal > 0);
+  const topPtsTied = sortedPts.filter(p => p.PTS === topPtsVal && topPtsVal > 0);
+  // Tiebreaker 1: most goals
+  const topPtsMaxG = Math.max(...topPtsTied.map(p => p.G));
+  const topPtsAfterG = topPtsTied.filter(p => p.G === topPtsMaxG);
+  // Tiebreaker 2: fewest PIM
+  const topPtsWinners = breakTieByPIM(topPtsAfterG);
   if (topPtsWinners.length) {
-    const w = winnersHtml(topPtsWinners, p => `${p.PTS} pts (${p.G}G + ${p.A}A) · ${p.Team}`);
+    const w = winnersHtml(topPtsWinners, p => `${p.PTS} pts (${p.G}G + ${p.A}A) · ${p.PIM} PIM · ${p.Team}`);
     html += awardCard('📊', 'Art Ross Trophy',
-      'Awarded to the player(s) with the most points in the regular season.',
+      'Awarded to the player(s) with the most points. Tiebreaker: most goals, then fewest penalty minutes.',
       w.winner, w.sub);
   }
 
-  // 4. James Norris Memorial Trophy — Defenceman with most points (ties shared)
+  // 4. James Norris Memorial Trophy — D-man most points, tiebreaker: most goals then fewest PIM
   const defencemen = skaters.filter(p => p.Pos === 'D');
-  const sortedDef = [...defencemen].sort((a,b) => b.PTS - a.PTS || b.G - a.G);
+  const sortedDef = [...defencemen].sort((a,b) => b.PTS - a.PTS);
   const topDefVal = sortedDef[0]?.PTS || 0;
-  const topDefWinners = sortedDef.filter(p => p.PTS === topDefVal && topDefVal > 0);
+  const topDefTied = sortedDef.filter(p => p.PTS === topDefVal && topDefVal > 0);
+  const topDefMaxG = Math.max(...topDefTied.map(p => p.G));
+  const topDefAfterG = topDefTied.filter(p => p.G === topDefMaxG);
+  const topDefWinners = breakTieByPIM(topDefAfterG);
   if (topDefWinners.length) {
-    const w = winnersHtml(topDefWinners, p => `${p.PTS} pts (${p.G}G + ${p.A}A) · Defence · ${p.Team}`);
+    const w = winnersHtml(topDefWinners, p => `${p.PTS} pts (${p.G}G + ${p.A}A) · ${p.PIM} PIM · Defence · ${p.Team}`);
     html += awardCard('🛡️', 'James Norris Memorial Trophy',
-      'Awarded to the defenceman(s) with the most points in the regular season.',
+      'Awarded to the defenceman(s) with the most points. Tiebreaker: most goals, then fewest penalty minutes.',
       w.winner, w.sub);
   } else {
     html += awardCard('🛡️', 'James Norris Memorial Trophy',
@@ -257,18 +268,44 @@ function buildRegularAwards(data) {
       '<span style="color:var(--text-muted);">No defencemen found in roster</span>', '');
   }
 
-  // 5. Vezina Trophy — Lowest GAA (min 10 GP), tiebreaker: W then SO
+  // 5. Vezina Trophy — Lowest GAA, tiebreaker: W then SO then fewest PIM, shared if still tied
   const eligibleGoalies = goalies.filter(g => (g.W + g.L + g.T) >= 1);
-  const topGoalie = [...eligibleGoalies].sort((a,b) => {
+  const sortedGoalies = [...eligibleGoalies].sort((a,b) => {
     if (a.GAA !== b.GAA) return a.GAA - b.GAA;
     if (b.W !== a.W) return b.W - a.W;
-    return b.SO - a.SO;
-  })[0];
-  if (topGoalie) {
+    if (b.SO !== a.SO) return b.SO - a.SO;
+    return Number(a.PIM||0) - Number(b.PIM||0);
+  });
+  const topGAA = sortedGoalies[0]?.GAA;
+  const vezinaTied = sortedGoalies.filter(g => g.GAA === topGAA);
+  // Apply tiebreakers sequentially, share if still tied after all
+  let vezinaWinners = vezinaTied;
+  if (vezinaWinners.length > 1) {
+    const maxW = Math.max(...vezinaWinners.map(g => g.W));
+    vezinaWinners = vezinaWinners.filter(g => g.W === maxW);
+  }
+  if (vezinaWinners.length > 1) {
+    const maxSO = Math.max(...vezinaWinners.map(g => g.SO));
+    vezinaWinners = vezinaWinners.filter(g => g.SO === maxSO);
+  }
+  if (vezinaWinners.length > 1) {
+    const minPIM = Math.min(...vezinaWinners.map(g => Number(g.PIM||0)));
+    vezinaWinners = vezinaWinners.filter(g => Number(g.PIM||0) === minPIM);
+  }
+  if (vezinaWinners.length === 1) {
+    const g = vezinaWinners[0];
     html += awardCard('🥅', 'Vezina Trophy',
-      'Awarded to the goalie with the lowest goals-against average. Tiebreaker: most wins, then most shutouts.',
-      `${teamDotHtml(topGoalie.Team)}<a href="player.html?name=${encodeURIComponent(topGoalie.Name)}&team=${encodeURIComponent(topGoalie.Team)}&type=goalie">${topGoalie.Name}</a>`,
-      `${topGoalie.GAA.toFixed(2)} GAA · ${topGoalie.W}W · ${topGoalie.SO} SO · ${topGoalie.Team}`
+      'Awarded to the goalie with the lowest GAA. Tiebreaker: most wins, most shutouts, fewest PIM.',
+      `${teamDotHtml(g.Team)}<a href="player.html?name=${encodeURIComponent(g.Name)}&team=${encodeURIComponent(g.Team)}&type=goalie">${g.Name}</a>`,
+      `${g.GAA.toFixed(2)} GAA · ${g.W}W · ${g.SO} SO · ${g.Team}`
+    );
+  } else if (vezinaWinners.length > 1) {
+    const winnerStr = vezinaWinners.map(g =>
+      `<div style="margin-bottom:4px;">${teamDotHtml(g.Team)}<a href="player.html?name=${encodeURIComponent(g.Name)}&team=${encodeURIComponent(g.Team)}&type=goalie">${g.Name}</a><span style="font-size:13px;color:var(--text-muted);margin-left:6px;">${g.GAA.toFixed(2)} GAA · ${g.W}W · ${g.SO} SO · ${g.Team}</span></div>`
+    ).join('');
+    html += awardCard('🥅', 'Vezina Trophy',
+      'Awarded to the goalie with the lowest GAA. Tiebreaker: most wins, most shutouts, fewest PIM.',
+      winnerStr, 'Tied award — shared by ' + vezinaWinners.length + ' goalies'
     );
   }
 
@@ -336,20 +373,23 @@ async function buildPlayoffAwards(data, rrData) {
       '<span style="color:var(--text-muted);">Not yet determined — update Champions tab in Google Sheet</span>', '');
   }
 
-  // 2. Conn Smythe — Most playoff points
+  // 2. Conn Smythe — Most playoff points, tiebreaker: most goals then fewest PIM
   const playoffSkaters = aggregateSkaters(roster, gameStats, schedule, 'playoff');
-  const connSmythe = [...playoffSkaters].sort((a,b) => b.PTS - a.PTS || b.G - a.G)[0];
-  const sortedConn = [...playoffSkaters].sort((a,b) => b.PTS - a.PTS || b.G - a.G);
+  const sortedConn = [...playoffSkaters].sort((a,b) => b.PTS - a.PTS);
   const connVal = sortedConn[0]?.PTS || 0;
-  const connWinners = sortedConn.filter(p => p.PTS === connVal && connVal > 0);
+  const connTied = sortedConn.filter(p => p.PTS === connVal && connVal > 0);
+  const connMaxG = connTied.length ? Math.max(...connTied.map(p => p.G)) : 0;
+  const connAfterG = connTied.filter(p => p.G === connMaxG);
+  const connMinPIM = connAfterG.length ? Math.min(...connAfterG.map(p => Number(p.PIM||0))) : 0;
+  const connWinners = connAfterG.filter(p => Number(p.PIM||0) === connMinPIM);
   if (connWinners.length) {
-    function connStatLine(p) { return `${p.PTS} playoff pts (${p.G}G + ${p.A}A) · ${p.Team}`; }
     const w = connWinners.length === 1
-      ? { winner: `${teamDotHtml(connWinners[0].Team)}${playerLink(connWinners[0].Name, connWinners[0].Team)}`, sub: connStatLine(connWinners[0]) }
-      : { winner: connWinners.map(p => `<div style="margin-bottom:4px;">${teamDotHtml(p.Team)}${playerLink(p.Name, p.Team)}<span style="font-size:13px;color:var(--text-muted);margin-left:6px;">${connStatLine(p)}</span></div>`).join(''),
+      ? { winner: `${teamDotHtml(connWinners[0].Team)}${playerLink(connWinners[0].Name, connWinners[0].Team)}`,
+          sub: `${connWinners[0].PTS} playoff pts (${connWinners[0].G}G + ${connWinners[0].A}A) · ${connWinners[0].PIM} PIM · ${connWinners[0].Team}` }
+      : { winner: connWinners.map(p => `<div style="margin-bottom:4px;">${teamDotHtml(p.Team)}${playerLink(p.Name, p.Team)}<span style="font-size:13px;color:var(--text-muted);margin-left:6px;">${p.PTS} pts (${p.G}G + ${p.A}A) · ${p.PIM} PIM · ${p.Team}</span></div>`).join(''),
           sub: 'Tied award — shared by ' + connWinners.length + ' players' };
     html += awardCard('🌟', 'Conn Smythe Trophy',
-      'Awarded to the most valuable player of the playoffs, based on playoff points.',
+      'Awarded to the most valuable player of the playoffs. Tiebreaker: most goals, then fewest penalty minutes.',
       w.winner, w.sub);
   } else {
     html += awardCard('🌟', 'Conn Smythe Trophy',
