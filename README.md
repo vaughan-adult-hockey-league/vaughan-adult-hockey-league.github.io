@@ -182,6 +182,9 @@ and individual player game logs all filter by this column.
 |-----|-------|
 | StartDate | 2026-09-01 |
 | EndDate | 2026-10-15 |
+| For Season | 2026-27 |
+
+- **For Season** — the season year shown in registration messages, e.g. "Registration for the 2026-27 season opens on...". Update each year alongside StartDate and EndDate.
 
 Use YYYY-MM-DD format. The form opens and closes automatically based on today's date.
 

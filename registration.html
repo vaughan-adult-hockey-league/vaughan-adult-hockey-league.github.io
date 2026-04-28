@@ -205,7 +205,7 @@
     <div class="reg-closed">
       <div class="reg-closed-icon">🔒</div>
       <div class="reg-closed-title">Registration is Currently Closed</div>
-      <p class="reg-closed-sub" id="reg-closed-msg">Registration for the 2026–27 season is not currently open. If you're interested in playing next year, please reach out via the contact page and we'll keep you posted.</p>
+      <p class="reg-closed-sub" id="reg-closed-msg">Registration for the <span class="reg-season-label">next</span> season is not currently open. If you're interested in playing next year, please reach out via the contact page and we'll keep you posted.</p>
       <a href="contact.html" class="reg-contact-btn">Contact Us →</a>
     </div>
   </div>
@@ -372,7 +372,7 @@ async function init() {
   if (!win || !win.StartDate || !win.EndDate) {
     document.getElementById('reg-closed').style.display = '';
     document.getElementById('reg-closed-msg').textContent =
-      'Registration for the 2026–27 season is not currently open. If you\'re interested in playing, please reach out via the contact page and we\'ll keep you posted.';
+      'Registration for the <span class="reg-season-label">next</span> season is not currently open. If you\'re interested in playing, please reach out via the contact page and we\'ll keep you posted.';
     return;
   }
 
@@ -391,10 +391,10 @@ async function init() {
     const isPast = today > end;
     if (isPast) {
       document.getElementById('reg-closed-msg').textContent =
-        `Registration for the 2026–27 season closed on ${formatDate(win.EndDate)}. If you'd like to be considered for next year, please send us a message via the contact page.`;
+        `Registration for the <span class="reg-season-label">the upcoming</span> season closed on ${formatDate(win.EndDate)}. If you'd like to be considered for next year, please send us a message via the contact page.`;
     } else {
       document.getElementById('reg-closed-msg').textContent =
-        `Registration for the 2026–27 season opens on ${formatDate(win.StartDate)}. Check back then, or send us a message if you have any questions.`;
+        `Registration for the <span class="reg-season-label">the upcoming</span> season opens on ${formatDate(win.StartDate)}. Check back then, or send us a message if you have any questions.`;
     }
   }
 }
@@ -552,6 +552,16 @@ init();
       if (show) link.style.display = '';
     } catch(e) {}
   })();
+
+  // Read "For Season" from Registration tab
+  fetchRegistrationWindow().then(win => {
+    const forSeason = win && win['For Season'] ? win['For Season'] : '';
+    if (forSeason) {
+      document.querySelectorAll('.reg-season-label').forEach(el => {
+        el.textContent = 'the ' + forSeason;
+      });
+    }
+  });
 </script>
 </body>
 </html>
