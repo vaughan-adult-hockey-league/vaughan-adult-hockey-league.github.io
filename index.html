@@ -58,6 +58,9 @@
     </div>
   </div>
 
+  <!-- ANNOUNCEMENT BANNER -->
+  <div id="announcement-banner" style="display:none;margin-bottom:1.5rem;"></div>
+
   <!-- TEAM GRID -->
   <p class="section-label" style="margin-top:1.75rem;">Teams</p>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1.75rem;" id="teams-grid"></div>
@@ -234,9 +237,24 @@ function renderHomeLeaders() {
 }
 
 async function init() {
-  const data = await loadData();
+  const [data, announcement] = await Promise.all([loadData(), fetchAnnouncement()]);
   _homeData = data;
   _roundRobin = await fetchRoundRobin();
+
+  // Show announcement if present
+  if (announcement.text) {
+    const banner = document.getElementById('announcement-banner');
+    const imgHtml = announcement.image
+      ? `<img src="images/${announcement.image}" alt="Announcement" style="width:100%;max-height:420px;object-fit:cover;border-radius:var(--radius);margin-top:1rem;" onerror="this.style.display='none'"/>`
+      : '';
+    banner.innerHTML = `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;">
+        <p style="font-size:15px;color:var(--text);margin:0;line-height:1.6;">${announcement.text}</p>
+        ${imgHtml}
+      </div>`;
+    banner.style.display = '';
+  }
+
   const { teams, skaters, schedule } = data;
 
   // Played / remaining
@@ -307,9 +325,16 @@ init();
     document.querySelectorAll('.season-label').forEach(el => el.textContent = label);
   });
 
-  // Show Awards nav link when regular season is complete and registration not yet open
+  // Show Awards nav link — cached in sessionStorage for performance
   (async () => {
     try {
+      const link = document.getElementById('awards-nav-link');
+      if (!link) return;
+      const cached = sessionStorage.getItem('vahl_awards_show');
+      if (cached !== null) {
+        if (cached === '1') link.style.display = '';
+        return;
+      }
       const data = await loadData();
       const regWin = await fetchRegistrationWindow();
       const today = new Date(); today.setHours(0,0,0,0);
@@ -317,8 +342,9 @@ init();
       const regOpen = regStart && today >= regStart;
       const regularGames = data.schedule.filter(g => Number(g.Playoff||0) === 0);
       const regularDone = regularGames.length > 0 && regularGames.every(g => g.Status !== 'Upcoming');
-      const link = document.getElementById('awards-nav-link');
-      if (link && regularDone && !regOpen) link.style.display = '';
+      const show = regularDone && !regOpen;
+      sessionStorage.setItem('vahl_awards_show', show ? '1' : '0');
+      if (show) link.style.display = '';
     } catch(e) {}
   })();
 </script>

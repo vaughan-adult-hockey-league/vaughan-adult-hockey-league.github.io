@@ -281,9 +281,16 @@ init();
     document.querySelectorAll('.season-label').forEach(el => el.textContent = label);
   });
 
-  // Show Awards nav link when regular season is complete and registration not yet open
+  // Show Awards nav link — cached in sessionStorage for performance
   (async () => {
     try {
+      const link = document.getElementById('awards-nav-link');
+      if (!link) return;
+      const cached = sessionStorage.getItem('vahl_awards_show');
+      if (cached !== null) {
+        if (cached === '1') link.style.display = '';
+        return;
+      }
       const data = await loadData();
       const regWin = await fetchRegistrationWindow();
       const today = new Date(); today.setHours(0,0,0,0);
@@ -291,8 +298,9 @@ init();
       const regOpen = regStart && today >= regStart;
       const regularGames = data.schedule.filter(g => Number(g.Playoff||0) === 0);
       const regularDone = regularGames.length > 0 && regularGames.every(g => g.Status !== 'Upcoming');
-      const link = document.getElementById('awards-nav-link');
-      if (link && regularDone && !regOpen) link.style.display = '';
+      const show = regularDone && !regOpen;
+      sessionStorage.setItem('vahl_awards_show', show ? '1' : '0');
+      if (show) link.style.display = '';
     } catch(e) {}
   })();
 </script>

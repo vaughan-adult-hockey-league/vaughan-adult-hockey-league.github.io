@@ -59,11 +59,25 @@ Sheet ID: already configured in js/data.js
 - Registration
 - Season
 - Round Robin
-- Season
-- Champions
+- Misc
 - Registrations (auto-created by Apps Script on first registration submission)
 
-### Season tab
+### Misc tab
+Single tab with four columns — headers in row 1, values in row 2:
+
+| Current Season | Champion | Announcement | Image |
+|---|---|---|---|
+| 2025-26 | Los Angeles | Welcome to the 2025-26 VAHL season! | 2025-26_Champions.jpeg |
+
+- **Current Season** — displayed throughout the site as the season label
+- **Champion** — team name shown in the VAHL Champions playoff award
+- **Announcement** — text shown on the Home page below the logo. Leave blank for no announcement
+- **Image** — filename of an image in the `images/` folder. Leave blank for no image. Image appears below the announcement text on the Home page
+
+### images/ folder
+Place any announcement or feature images here. Reference the filename (e.g. `2025-26_Champions.jpeg`) in the Misc tab Image column to display it on the Home page.
+
+### Season tab (REMOVED)
 The Season tab has NO column headers. Row 1 contains the label "Season" and row 2 contains the actual value:
 
 | (no header) |

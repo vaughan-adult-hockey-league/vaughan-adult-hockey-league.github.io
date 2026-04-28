@@ -344,21 +344,8 @@ async function buildPlayoffAwards(data, rrData) {
 
   let html = '';
 
-  // Fetch champions from Champions tab
-  let champTeam = '';
-  try {
-    const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(TAB_NAMES.champions);
-    const res = await fetch(url);
-    const text = await res.text();
-    const json = JSON.parse(text.substring(47, text.length - 2));
-    for (const row of (json.table.rows || [])) {
-      for (const cell of (row.c || [])) {
-        const v = cell && cell.v != null ? String(cell.v).trim() : '';
-        if (v) { champTeam = v; break; }
-      }
-      if (champTeam) break;
-    }
-  } catch(e) {}
+  // Fetch champion from Misc tab
+  let champTeam = await fetchChampion();
 
   // 1. VAHL Champions
   if (champTeam) {

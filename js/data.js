@@ -27,8 +27,7 @@ const TAB_NAMES = {
   schedule:     'Schedule',
   registration: 'Registration',
   roundRobin:   'Round Robin',
-  season:       'Season',
-  champions:    'Champions',
+  misc:         'Misc',
 };
 
 const TEAM_COLORS = {
@@ -347,22 +346,59 @@ async function fetchRoundRobin() {
 // ── Season label ───────────────────────────────────────────────
 // Tab has a single column "Season" with the season value in row 1
 // e.g. "2026-27"
-async function fetchSeason() {
+// ── Misc tab ───────────────────────────────────────────────────
+// Headers in row 1: Current Season | Champion | Announcement | Image
+// Values in row 2 below each header
+let _miscCache = null;
+async function fetchMisc() {
+  if (_miscCache) return _miscCache;
   try {
-    const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(TAB_NAMES.season);
+    const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(TAB_NAMES.misc);
     const res = await fetch(url);
     const text = await res.text();
     const json = JSON.parse(text.substring(47, text.length - 2));
-    for (const row of (json.table.rows || [])) {
-      for (const cell of (row.c || [])) {
-        const v = cell && cell.v != null ? String(cell.v).trim() : '';
-        if (v && /\d/.test(v) && /-/.test(v)) return v;
+    const cols = json.table.cols.map(c => c.label.trim());
+    const rows = json.table.rows || [];
+    // Find header row and value row
+    // Row 0 has headers if col labels are blank — check both
+    const obj = {};
+    if (cols.some(c => c)) {
+      // Column labels are the headers
+      if (rows[0]) {
+        rows[0].c.forEach((cell, i) => {
+          if (cols[i]) obj[cols[i]] = cell && cell.v != null ? String(cell.v).trim() : '';
+        });
+      }
+    } else {
+      // No column labels — row 0 is headers, row 1 is values
+      const headers = rows[0] ? rows[0].c.map(cell => cell && cell.v != null ? String(cell.v).trim() : '') : [];
+      if (rows[1]) {
+        rows[1].c.forEach((cell, i) => {
+          if (headers[i]) obj[headers[i]] = cell && cell.v != null ? String(cell.v).trim() : '';
+        });
       }
     }
-    return '2026\u201327';
+    _miscCache = obj;
+    return obj;
   } catch(e) {
-    return '2026\u201327';
+    return {};
   }
+}
+
+// Convenience wrappers
+async function fetchSeason() {
+  const misc = await fetchMisc();
+  return misc['Current Season'] || '2025-26';
+}
+
+async function fetchChampion() {
+  const misc = await fetchMisc();
+  return misc['Champion'] || '';
+}
+
+async function fetchAnnouncement() {
+  const misc = await fetchMisc();
+  return { text: misc['Announcement'] || '', image: misc['Image'] || '' };
 }
 function teamDot(team, size = 8) {
   const color = TEAM_COLORS[team]?.primary || '#999';
