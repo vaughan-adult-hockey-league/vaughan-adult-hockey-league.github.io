@@ -137,7 +137,7 @@ function renderTeams() {
     const h2hRows = opponents.map((opp, idx) => {
       const rec = h2hRecord(t.Team, opp, schedule, _teamsSeason);
       const color = TEAM_COLORS[opp]?.primary || '#999';
-      const gdot = '<span style="width:5px;height:5px;border-radius:50%;background:#9ca3af;display:inline-block;margin:0 4px;vertical-align:middle;"></span>';
+      const gdot = '<span style="width:1px;height:1px;border-radius:50%;background:#9ca3af;display:inline-block;margin:0 4px;vertical-align:middle;"></span>';
       let recStr;
       if (rec.gp === 0) {
         recStr = '<span style="color:var(--text-muted);">–</span>';

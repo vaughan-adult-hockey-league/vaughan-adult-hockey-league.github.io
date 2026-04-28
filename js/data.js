@@ -348,17 +348,19 @@ async function fetchRoundRobin() {
 // e.g. "2026-27"
 async function fetchSeason() {
   try {
-    const rows = await fetchTab(TAB_NAMES.season);
-    // Tab has no column headers — row 0 contains "Season" label, row 1 contains the value
-    for (const row of rows) {
-      for (const val of Object.values(row)) {
-        const s = String(val || '').trim();
-        if (s && s !== 'Season') return s;
+    const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(TAB_NAMES.season);
+    const res = await fetch(url);
+    const text = await res.text();
+    const json = JSON.parse(text.substring(47, text.length - 2));
+    for (const row of (json.table.rows || [])) {
+      for (const cell of (row.c || [])) {
+        const v = cell && cell.v != null ? String(cell.v).trim() : '';
+        if (v && /\d/.test(v) && /-/.test(v)) return v;
       }
     }
-    return '2026–27';
+    return '2026\u201327';
   } catch(e) {
-    return '2026–27';
+    return '2026\u201327';
   }
 }
 function teamDot(team, size = 8) {
