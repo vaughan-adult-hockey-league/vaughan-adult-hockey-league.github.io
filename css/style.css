@@ -208,7 +208,7 @@ a { color: inherit; text-decoration: none; }
 .s-btn:hover { border-color: #94a3b8; color: var(--text); }
 .s-btn.active { background: #1e40af; border-color: #1e40af; color: #fff; }
 .s-btn.active-playoff { background: #7c3aed; border-color: #7c3aed; color: #fff; }
-.s-btn.active-combined { background: #0891b2; border-color: #0891b2; color: #fff; }
+.s-btn.active-combined { background: #0891b2 !important; border-color: #0891b2 !important; color: #fff !important; }
 
 /* CLICKABLE GAME ROW */
 .game-row-link { color: inherit; }
