@@ -62,7 +62,23 @@ Sheet ID: already configured in js/data.js
 - Registrations (auto-created by Apps Script on first registration submission)
 
 ### Season tab
-Single column `Season` with one value row — e.g. `2026-27`. This value is displayed throughout the site as the season label. Update it each year to refresh the entire site without any code changes.
+The Season tab has NO column headers. Row 1 contains the label "Season" and row 2 contains the actual value:
+
+| (no header) |
+|-------------|
+| Season      |
+| 2025-26     |
+
+Update the value in row 2 each year and the entire site refreshes automatically — no code changes needed.
+
+### Round Robin tab
+One column per team, header = team name, value row = round robin points total:
+
+| Toronto | Philadelphia | Los Angeles | Dallas |
+|---------|-------------|-------------|--------|
+| 5.5     | 7.5         | 14.5        | 5      |
+
+This is only used in the Playoffs standings view on the Home page (RRPTS column).
 
 ---
 
@@ -306,6 +322,7 @@ Place PDF files in the handouts/ folder with these exact filenames:
 | Stats | stats.html | League-wide leaderboards, sortable, filterable |
 | Handouts | handouts.html | Downloadable PDF documents |
 | Registration | registration.html | Date-gated registration form, auto-fills Google Sheet |
+| Boxscore | boxscore.html | Full game stats — skaters + goalies for a single game |
 | Contact | contact.html | Contact form + rink info and map |
 
 ---

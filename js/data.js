@@ -349,7 +349,14 @@ async function fetchRoundRobin() {
 async function fetchSeason() {
   try {
     const rows = await fetchTab(TAB_NAMES.season);
-    return (rows[0] && (rows[0].Season || Object.values(rows[0])[0])) || '2026–27';
+    // Tab has no column headers — row 0 contains "Season" label, row 1 contains the value
+    for (const row of rows) {
+      for (const val of Object.values(row)) {
+        const s = String(val || '').trim();
+        if (s && s !== 'Season') return s;
+      }
+    }
+    return '2026–27';
   } catch(e) {
     return '2026–27';
   }
