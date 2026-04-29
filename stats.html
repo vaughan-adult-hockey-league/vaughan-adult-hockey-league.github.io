@@ -174,22 +174,31 @@ function colVal(p, col) {
 function renderSkaters() {
   const data = skaterFilter === 'All' ? allSkaters : allSkaters.filter(p => p.Team === skaterFilter);
   const sorted = [...data].sort((a,b) => {
-    if (skaterSort === 'pos') {
-      const aIsG = a.Pos === 'G', bIsG = b.Pos === 'G';
-      // G always last
-      if (aIsG !== bIsG) return aIsG ? 1 : -1;
-      const aIsD = a.Pos === 'D', bIsD = b.Pos === 'D';
-      if (skaterDir === 1) {
-        if (aIsD !== bIsD) return aIsD ? 1 : -1;
-      } else {
-        if (aIsD !== bIsD) return aIsD ? -1 : 1;
-      }
-      return Number(b.PTS||0) - Number(a.PTS||0);
-    }
-    // For all other sorts, always keep G at bottom
+    // G always last regardless of sort
     const aIsG = a.Pos === 'G', bIsG = b.Pos === 'G';
     if (aIsG !== bIsG) return aIsG ? 1 : -1;
-    return skaterDir * (colVal(b, skaterSort) - colVal(a, skaterSort));
+
+    if (skaterSort === 'pos') {
+      const aIsD = a.Pos === 'D', bIsD = b.Pos === 'D';
+      if (skaterDir === 1) { if (aIsD !== bIsD) return aIsD ? 1 : -1; }
+      else                 { if (aIsD !== bIsD) return aIsD ? -1 : 1; }
+      return Number(b.PTS||0) - Number(a.PTS||0);
+    }
+
+    const av = colVal(a, skaterSort), bv = colVal(b, skaterSort);
+    if (av !== bv) return skaterDir * (bv - av);
+
+    // Tiebreakers
+    if (skaterSort === 'pts') {
+      // PTS tie → most G → fewest PIM
+      if (Number(b.G||0) !== Number(a.G||0)) return Number(b.G||0) - Number(a.G||0);
+      return Number(a.PIM||0) - Number(b.PIM||0);
+    }
+    if (skaterSort === 'g' || skaterSort === 'a') {
+      // G or A tie → fewest PIM
+      return Number(a.PIM||0) - Number(b.PIM||0);
+    }
+    return 0;
   });
   document.getElementById('skaters-body').innerHTML = sorted.map((p, i) => `
     <tr>
@@ -228,7 +237,22 @@ function renderGoalies() {
   const data = goalieFilter === 'All'
     ? allGoalies.filter(p => !(p.Name||'').toLowerCase().includes('rental'))
     : allGoalies.filter(p => p.Team === goalieFilter);
-  const sorted = [...data].sort((a,b) => goalieDir * (colVal(a, goalieSort) - colVal(b, goalieSort)));
+  const sorted = [...data].sort((a,b) => {
+    if (goalieSort === 'gaa') {
+      // Primary sort: lowest GAA (rounded to 2dp to avoid float precision issues)
+      const aGAA = Math.round(a.GAA * 100), bGAA = Math.round(b.GAA * 100);
+      if (aGAA !== bGAA) return goalieDir * (aGAA - bGAA);
+      // Tiebreakers: most W → most SO → fewest PIM
+      if (b.W !== a.W) return Number(b.W||0) - Number(a.W||0);
+      if (b.SO !== a.SO) return Number(b.SO||0) - Number(a.SO||0);
+      return Number(a.PIM||0) - Number(b.PIM||0);
+    }
+    const av = colVal(a, goalieSort), bv = colVal(b, goalieSort);
+    if (av !== bv) return goalieDir * (bv - av);
+    // For all other columns, tiebreaker is GAA
+    const aGAA = Math.round(a.GAA * 100), bGAA = Math.round(b.GAA * 100);
+    return aGAA - bGAA;
+  });
   document.getElementById('goalies-body').innerHTML = sorted.map((p, i) => `
     <tr>
       <td class="left" style="padding-top:0.3rem;padding-bottom:0.3rem;"><span class="${i===0?'rank-1':'rank-num'}">${i+1}</span></td>
