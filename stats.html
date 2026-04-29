@@ -161,17 +161,20 @@ function renderSkaters() {
   const data = skaterFilter === 'All' ? allSkaters : allSkaters.filter(p => p.Team === skaterFilter);
   const sorted = [...data].sort((a,b) => {
     if (skaterSort === 'pos') {
+      const aIsG = a.Pos === 'G', bIsG = b.Pos === 'G';
+      // G always last
+      if (aIsG !== bIsG) return aIsG ? 1 : -1;
       const aIsD = a.Pos === 'D', bIsD = b.Pos === 'D';
-      // skaterDir=1 → Forwards first (D=1 sorts last); skaterDir=-1 → D first (D=1 sorts first)
       if (skaterDir === 1) {
-        // Forwards first, then D; within each group sort by PTS desc
         if (aIsD !== bIsD) return aIsD ? 1 : -1;
       } else {
-        // D first, then Forwards; within each group sort by PTS desc
         if (aIsD !== bIsD) return aIsD ? -1 : 1;
       }
       return Number(b.PTS||0) - Number(a.PTS||0);
     }
+    // For all other sorts, always keep G at bottom
+    const aIsG = a.Pos === 'G', bIsG = b.Pos === 'G';
+    if (aIsG !== bIsG) return aIsG ? 1 : -1;
     return skaterDir * (colVal(b, skaterSort) - colVal(a, skaterSort));
   });
   document.getElementById('skaters-body').innerHTML = sorted.map((p, i) => `

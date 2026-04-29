@@ -337,13 +337,8 @@ async function loadData() {
       fetchTab(TAB_NAMES.roundRobin).catch(() => []),
     ]);
 
-    // Parse Misc tab
-    const misc = {};
-    if (miscRaw.length) {
-      const cols = Object.keys(miscRaw[0]);
-      cols.forEach(col => { if (col) misc[col] = miscRaw[0][col] || ''; });
-    }
-    _miscCache = misc;
+    // Parse Misc tab — fetchTab already returns row objects keyed by column header
+    _miscCache = miscRaw.length ? miscRaw[0] : {};
 
     // Parse Round Robin tab
     _rrCache = rrRaw.length ? rrRaw[0] : {};
@@ -355,7 +350,7 @@ async function loadData() {
     const skaters = aggregateSkaters(skaterRoster, gameStats, schedule, 'all');
     const goalies = aggregateGoalies(goalieRoster, gameStats, schedule, 'all');
     const teams   = buildTeams(schedule, 'all');
-    _cache = { teams, skaters, goalies, schedule, roster, skaterRoster, goalieRoster, gameStats, misc, roundRobin: _rrCache };
+    _cache = { teams, skaters, goalies, schedule, roster, skaterRoster, goalieRoster, gameStats, misc: _miscCache, roundRobin: _rrCache };
     return _cache;
   } catch (e) {
     console.error('Failed to load Google Sheets data:', e);
