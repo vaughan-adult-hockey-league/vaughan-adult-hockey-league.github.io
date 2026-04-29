@@ -282,6 +282,17 @@
               <label for="player_note">Additional Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label>
               <input type="text" id="player_note" name="player_note" placeholder="e.g. returning player, skill level, etc."/>
             </div>
+            <!-- Honeypot — hidden from real users, catches bots -->
+            <div style="display:none;" aria-hidden="true">
+              <label for="_hp">Leave this blank</label>
+              <input type="text" id="_hp" name="_hp" tabindex="-1" autocomplete="off"/>
+            </div>
+
+            <!-- Privacy Notice -->
+            <p style="font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:1rem;padding:0.75rem;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);">
+              🔒 Your personal information is collected for VAHL league administration purposes only and will not be shared with third parties. It is stored securely and accessible only to league organizers.
+            </p>
+
             <button type="submit" class="submit-btn" id="reg-submit-btn">Submit Registration</button>
             <div class="status-msg" id="reg-status-msg"></div>
           </form>
@@ -510,6 +521,7 @@ async function sendRegistration(e) {
   status.textContent = '';
 
   const payload = {
+    _hp:      document.getElementById('_hp')?.value || '',
     name:     document.getElementById('player_name').value,
     email:    document.getElementById('player_email').value,
     phone:    document.getElementById('player_phone').value,
