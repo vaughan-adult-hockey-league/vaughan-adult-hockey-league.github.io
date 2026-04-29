@@ -218,7 +218,7 @@ function renderTeams() {
 async function init() {
   const data = await loadData();
   _teamsData = data;
-  _rrData = await fetchRoundRobin();
+  _rrData = data.roundRobin || {};
   renderTeams();
 }
 init();

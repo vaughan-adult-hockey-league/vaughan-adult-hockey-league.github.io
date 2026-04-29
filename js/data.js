@@ -321,16 +321,33 @@ function buildTeams(schedule, seasonType = 'all') {
 
 // ── Main data loader ───────────────────────────────────────────
 let _cache = null;
+let _miscCache = null;
+let _rrCache = null;
 
 async function loadData() {
   if (_cache) return _cache;
   const usingPlaceholder = SHEET_ID === PLACEHOLDER_SHEET_ID;
   try {
-    const [roster, gameStats, schedule] = await Promise.all([
+    // Fetch all tabs in parallel — including Misc and Round Robin
+    const [roster, gameStats, schedule, miscRaw, rrRaw] = await Promise.all([
       fetchTab(TAB_NAMES.roster),
       fetchTab(TAB_NAMES.gameStats),
       fetchTab(TAB_NAMES.schedule),
+      fetchTab(TAB_NAMES.misc).catch(() => []),
+      fetchTab(TAB_NAMES.roundRobin).catch(() => []),
     ]);
+
+    // Parse Misc tab
+    const misc = {};
+    if (miscRaw.length) {
+      const cols = Object.keys(miscRaw[0]);
+      cols.forEach(col => { if (col) misc[col] = miscRaw[0][col] || ''; });
+    }
+    _miscCache = misc;
+
+    // Parse Round Robin tab
+    _rrCache = rrRaw.length ? rrRaw[0] : {};
+
     // Split roster into skaters (non-G) and goalies (Pos = G)
     const skaterRoster = roster.filter(p => (p.Pos || '').toUpperCase() !== 'G');
     const goalieRoster = roster.filter(p => (p.Pos || '').toUpperCase() === 'G');
@@ -338,16 +355,14 @@ async function loadData() {
     const skaters = aggregateSkaters(skaterRoster, gameStats, schedule, 'all');
     const goalies = aggregateGoalies(goalieRoster, gameStats, schedule, 'all');
     const teams   = buildTeams(schedule, 'all');
-    _cache = { teams, skaters, goalies, schedule, roster, skaterRoster, goalieRoster, gameStats };
+    _cache = { teams, skaters, goalies, schedule, roster, skaterRoster, goalieRoster, gameStats, misc, roundRobin: _rrCache };
     return _cache;
   } catch (e) {
     console.error('Failed to load Google Sheets data:', e);
     if (!usingPlaceholder) {
-      // Real Sheet ID was set but fetch failed — show error
       document.addEventListener('DOMContentLoaded', showSheetError);
       showSheetError();
     }
-    // Fall back to demo data
     FALLBACK_DATA.teams = buildTeams(FALLBACK_DATA.schedule);
     FALLBACK_DATA.goalies.forEach(g => {
       const gp = g.W + g.L + g.T;
@@ -357,6 +372,8 @@ async function loadData() {
     FALLBACK_DATA.roster = [];
     FALLBACK_DATA.skaterRoster = [];
     FALLBACK_DATA.goalieRoster = [];
+    FALLBACK_DATA.misc = {};
+    FALLBACK_DATA.roundRobin = {};
     return FALLBACK_DATA;
   }
 }
@@ -372,78 +389,52 @@ async function fetchRegistrationWindow() {
 }
 
 // ── Round Robin points ─────────────────────────────────────────
-// Tab has one column per team, with the team name as the header
-// and a single value row with the points total
 async function fetchRoundRobin() {
+  if (_rrCache) return _rrCache;
   try {
     const rows = await fetchTab(TAB_NAMES.roundRobin);
-    if (!rows.length) return {};
-    // Each column header is a team name, value is in row 0
-    return rows[0]; // e.g. { Toronto: '4', Philadelphia: '2', ... }
+    _rrCache = rows.length ? rows[0] : {};
+    return _rrCache;
   } catch (e) { return {}; }
 }
 
-// ── Season label ───────────────────────────────────────────────
-// Tab has a single column "Season" with the season value in row 1
-// e.g. "2026-27"
-// ── Misc tab ───────────────────────────────────────────────────
-// Headers in row 1: Current Season | Champion | Announcement | Image
-// Values in row 2 below each header
-let _miscCache = null;
+// ── Misc tab helpers ───────────────────────────────────────────
+// Data is fetched as part of loadData() for performance.
+// These helpers use the in-memory cache when available.
 async function fetchMisc() {
   if (_miscCache) return _miscCache;
   try {
     const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(TAB_NAMES.misc);
     const res = await fetch(url);
     const text = await res.text();
-    const json = JSON.parse(text.substring(47, text.length - 2));
+    const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}')+1));
     const cols = json.table.cols.map(c => c.label.trim());
     const rows = json.table.rows || [];
-    // Find header row and value row
-    // Row 0 has headers if col labels are blank — check both
     const obj = {};
-    if (cols.some(c => c)) {
-      // Column labels are the headers
-      if (rows[0]) {
-        rows[0].c.forEach((cell, i) => {
-          if (cols[i]) obj[cols[i]] = cell && cell.v != null ? String(cell.v).trim() : '';
-        });
-      }
-    } else {
-      // No column labels — row 0 is headers, row 1 is values
-      const headers = rows[0] ? rows[0].c.map(cell => cell && cell.v != null ? String(cell.v).trim() : '') : [];
-      if (rows[1]) {
-        rows[1].c.forEach((cell, i) => {
-          if (headers[i]) obj[headers[i]] = cell && cell.v != null ? String(cell.v).trim() : '';
-        });
-      }
+    if (cols.some(c => c) && rows[0]) {
+      rows[0].c.forEach((cell, i) => { if (cols[i]) obj[cols[i]] = cell && cell.v != null ? String(cell.v).trim() : ''; });
+    } else if (rows.length >= 2) {
+      const headers = rows[0].c.map(cell => cell && cell.v != null ? String(cell.v).trim() : '');
+      rows[1].c.forEach((cell, i) => { if (headers[i]) obj[headers[i]] = cell && cell.v != null ? String(cell.v).trim() : ''; });
     }
     _miscCache = obj;
     return obj;
-  } catch(e) {
-    return {};
-  }
+  } catch(e) { return {}; }
 }
 
-// Convenience wrappers
 async function fetchSeason() {
-  const misc = await fetchMisc();
+  const misc = _miscCache || await fetchMisc();
   return misc['Current Season'] || '2025-26';
 }
 
 async function fetchChampion() {
-  const misc = await fetchMisc();
+  const misc = _miscCache || await fetchMisc();
   return misc['Champion'] || '';
 }
 
 async function fetchAnnouncement() {
-  const misc = await fetchMisc();
-  return {
-    text:     misc['Announcement'] || '',
-    image:    misc['Image'] || '',
-    fontSize: misc['Font Size'] || '15',
-    align:    misc['Align'] || 'left',
-  };
+  const misc = _miscCache || await fetchMisc();
+  return { text: misc['Announcement'] || '', image: misc['Image'] || '', fontSize: misc['Font Size'] || '15', align: misc['Align'] || 'left' };
 }
 function teamDot(team, size = 8) {
   const color = TEAM_COLORS[team]?.primary || '#999';

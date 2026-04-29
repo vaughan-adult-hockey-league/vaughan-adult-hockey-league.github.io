@@ -264,7 +264,7 @@ function renderHomeLeaders() {
 async function init() {
   const [data, announcement] = await Promise.all([loadData(), fetchAnnouncement()]);
   _homeData = data;
-  _roundRobin = await fetchRoundRobin();
+  _roundRobin = data.roundRobin || {};
 
   // Show announcement if present
   if (announcement.text) {
@@ -326,7 +326,7 @@ async function init() {
         <div class="game-team-col away"><span class="${awayWin?'winner':'loser'}" style="font-size:13px;">${g.Away}</span>${dot(g.Away,'left')}</div>
         <div class="game-score"><span class="${awayWin?'winner':'loser'}">${g.AwayScore}</span><span class="score-sep">–</span><span class="${homeWin?'winner':'loser'}">${g.HomeScore}</span></div>
         <div class="game-team-col">${dot(g.Home,'right')}<span class="${homeWin?'winner':'loser'}" style="font-size:13px;">${g.Home}</span></div>
-        <div class="game-status"><span class="badge badge-${isTie?'tie':'final'}">${g.Status}</span></div>
+        <div class="game-status"><span class="badge badge-${isTie?'tie':'final'}">${isTie?'Tie':g.Status}</span></div>
       </div>
     </a>`;
   }).join('');

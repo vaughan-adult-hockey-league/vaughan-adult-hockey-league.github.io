@@ -128,7 +128,7 @@ function gameRow(g, badge) {
       <div class="game-team-col away"><span class="${awayWin?'winner':'loser'}" style="font-size:13px;">${g.Away}</span>${dot(awayColor,'left')}</div>
       <div class="game-score"><span class="${awayWin?'winner':'loser'}">${g.AwayScore}</span><span class="score-sep">–</span><span class="${homeWin?'winner':'loser'}">${g.HomeScore}</span></div>
       <div class="game-team-col">${dot(homeColor,'right')}<span class="${homeWin?'winner':'loser'}" style="font-size:13px;">${g.Home}</span></div>
-      <div class="game-status"><span class="badge badge-${(g.Status==='Tie'||Number(g.HomeScore)===Number(g.AwayScore))?'tie':'final'}">${g.Status}</span></div>
+      <div class="game-status"><span class="badge badge-${(g.Status==='Tie'||Number(g.HomeScore)===Number(g.AwayScore))?'tie':'final'}">${(g.Status==='Tie'||Number(g.HomeScore)===Number(g.AwayScore))?'Tie':'Final'}</span></div>
     </div>
   </a>`;
 }

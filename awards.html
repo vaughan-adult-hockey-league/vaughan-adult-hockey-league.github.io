@@ -432,7 +432,8 @@ async function buildPlayoffAwards(data, rrData) {
 
 async function init() {
   try {
-    const [data, rrData] = await Promise.all([loadData(), fetchRoundRobin()]);
+    const data = await loadData();
+  const rrData = data.roundRobin || {};
     _awardsData = data;
 
     const { schedule } = data;
