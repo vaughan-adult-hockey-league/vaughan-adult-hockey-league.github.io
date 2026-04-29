@@ -172,6 +172,16 @@
     .sched-day { color: var(--text-muted); font-size: 13px; }
     .sched-time { color: var(--text); font-weight: 500; }
   </style>
+  <script>
+    // vahl_awards_show_inline
+    // Run synchronously before render — show Awards link instantly if cached
+    if (sessionStorage.getItem('vahl_awards_show') === '1') {
+      document.addEventListener('DOMContentLoaded', function() {
+        var link = document.getElementById('awards-nav-link');
+        if (link) link.style.display = '';
+      });
+    }
+  </script>
 </head>
 <body>
 

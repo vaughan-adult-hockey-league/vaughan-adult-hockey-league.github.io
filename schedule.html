@@ -38,6 +38,16 @@
   <meta name="msapplication-TileColor" content="#1e40af"/>
   <meta name="msapplication-TileImage" content="icons/icon-144x144.png"/>
   <link rel="stylesheet" href="css/style.css"/>
+  <script>
+    // vahl_awards_show_inline
+    // Run synchronously before render — show Awards link instantly if cached
+    if (sessionStorage.getItem('vahl_awards_show') === '1') {
+      document.addEventListener('DOMContentLoaded', function() {
+        var link = document.getElementById('awards-nav-link');
+        if (link) link.style.display = '';
+      });
+    }
+  </script>
 </head>
 <body>
 

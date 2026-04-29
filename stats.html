@@ -38,6 +38,16 @@
   <meta name="msapplication-TileColor" content="#1e40af"/>
   <meta name="msapplication-TileImage" content="icons/icon-144x144.png"/>
   <link rel="stylesheet" href="css/style.css"/>
+  <script>
+    // vahl_awards_show_inline
+    // Run synchronously before render — show Awards link instantly if cached
+    if (sessionStorage.getItem('vahl_awards_show') === '1') {
+      document.addEventListener('DOMContentLoaded', function() {
+        var link = document.getElementById('awards-nav-link');
+        if (link) link.style.display = '';
+      });
+    }
+  </script>
 </head>
 <body>
 
@@ -293,7 +303,17 @@ async function init() {
   // Check URL param for team pre-filter
   const params = new URLSearchParams(window.location.search);
   const teamParam = params.get('team');
-  if (teamParam) { skaterFilter = teamParam; goalieFilter = teamParam; }
+  if (teamParam) {
+    skaterFilter = teamParam;
+    goalieFilter = teamParam;
+    // Highlight the correct team button on load
+    document.querySelectorAll('#skater-filters .f-btn').forEach(b =>
+      b.classList.toggle('active', b.textContent.trim() === teamParam)
+    );
+    document.querySelectorAll('#goalie-filters .f-btn').forEach(b =>
+      b.classList.toggle('active', b.textContent.trim() === teamParam)
+    );
+  }
 
   renderSkaters();
   renderGoalies();
