@@ -143,7 +143,7 @@ function setRosterSeason(type, btn) {
 
 async function renderTeam(team, data) {
   _activeRosterTeam = team;
-  const { roster, gameStats, goalieStats, schedule } = data;
+  const { roster, gameStats, schedule } = data;
 
   // Re-aggregate based on current season type
   const skaterRoster = roster; // include all players including goalies (Pos=G)

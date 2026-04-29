@@ -270,7 +270,7 @@ function skatersTable(players, bodyId, footId, teamColor) {
 async function init() {
   try {
     const data = await loadData();
-    const { gameStats, goalieStats, roster, schedule } = data;
+    const { gameStats, roster, schedule } = data;
     const goalieRoster = (roster||[]).filter(p => (p.Pos||'').toUpperCase() === 'G');
 
     // Find the game in schedule
@@ -351,45 +351,45 @@ async function init() {
     skatersTable(enrich(awaySkaters), 'away-skaters-body', 'away-skaters-foot', awayColor);
     skatersTable(enrich(homeSkaters), 'home-skaters-body', 'home-skaters-foot', homeColor);
 
-    // Goalies for this game
-    const gameGoalies = (goalieStats||[]).filter(r => {
-      const d = normaliseDate(r.Date || r.GameDate || Object.values(r).find(v=>String(v).match(/[A-Z][a-z]{2}\s+\d/))||'');
-      return d === normGameDate && (r.Team === gameHome || r.Team === gameAway);
-    });
-
-    // Enrich with jersey from goalieRoster
+    // Derive per-game goalie stats from Schedule + GoalieRoster
     const goalieRosterMap = {};
-    (goalieRoster||[]).forEach(g => { goalieRosterMap[`${g.Name}|${g.Team}`] = g; });
+    (goalieRoster||[]).forEach(g => { goalieRosterMap[g.Team] = g; });
 
-    // Sort: away goalie first, then home
-    const sortedGoalies = [...gameGoalies].sort((a,b) => {
-      if (a.Team === gameAway && b.Team === gameHome) return -1;
-      if (a.Team === gameHome && b.Team === gameAway) return 1;
-      return 0;
-    });
+    const sortedGoalies = [gameAway, gameHome].map(team => {
+      const gr = goalieRosterMap[team];
+      if (!gr) return null;
+      const isHome = team === gameHome;
+      const myScore = isHome ? homeScore : awayScore;
+      const oppScore = isHome ? awayScore : homeScore;
+      const isTie = homeScore === awayScore;
+      const dec = isTie ? 'T' : myScore > oppScore ? 'W' : 'L';
+      const ga = oppScore;
+      const so = oppScore === 0 ? 1 : 0;
+      // PIM from GameStats rows with Pos=G for this team+date
+      const pim = gameStats.filter(r => {
+        const pos = (r.Pos||'').toUpperCase();
+        const d = normaliseDate(r.Date || r.GameDate || '');
+        return pos === 'G' && r.Team === team && d === normGameDate;
+      }).reduce((s,r) => s + Number(r.PIM||0), 0);
+      return { name: gr.Name, team, jersey: gr.Jersey || '–', dec, ga, so, pim };
+    }).filter(Boolean);
 
     document.getElementById('goalies-body').innerHTML = sortedGoalies.map(g => {
-      const name = g.Goalie || g.Name || '';
-      const gr = goalieRosterMap[`${name}|${g.Team}`] || {};
-      const jersey = g.Jersey || gr.Jersey || '–';
-      const w=Number(g.W||0), l=Number(g.L||0), t=Number(g.T||0);
-      const ga=Number(g.GA||0), so=Number(g.SO||0), pim=Number(g.PIM||0);
-      const dec = w?'W':l?'L':t?'T':'–';
-      const decColor = w?'#16a34a':l?'#dc2626':'#d97706';
-      const tColor = TEAM_COLORS[g.Team]?.primary || '#999';
+      const decColor = g.dec==='W'?'#16a34a':g.dec==='L'?'#dc2626':'#d97706';
+      const tColor = TEAM_COLORS[g.team]?.primary || '#999';
       return `<tr>
-        <td class="left"><span class="jersey-num">${jersey}</span></td>
-        <td class="left"><a href="player.html?name=${encodeURIComponent(name)}&team=${encodeURIComponent(g.Team)}&type=goalie" style="font-weight:500;color:var(--text);text-decoration:none;" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='var(--text)'">${name}</a></td>
-        <td class="left"><span style="display:inline-flex;align-items:center;gap:5px;font-size:13px;"><span style="width:8px;height:8px;border-radius:50%;background:${tColor};display:inline-block;"></span>${g.Team}</span></td>
-        <td><span style="font-weight:700;color:${decColor};">${dec}</span></td>
-        <td>${ga}</td>
-        <td><span class="stat-hi">${ga.toFixed ? ga.toFixed(0) : ga}.00</span></td>
-        <td>${so>0?`<span class="stat-hi">${so}</span>`:so}</td>
-        <td>${pim>0?`<span style="color:#dc2626;font-weight:600;">${pim}</span>`:pim}</td>
+        <td class="left"><span class="jersey-num">${g.jersey}</span></td>
+        <td class="left"><a href="player.html?name=${encodeURIComponent(g.name)}&team=${encodeURIComponent(g.team)}&type=goalie" style="font-weight:500;color:var(--text);text-decoration:none;" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='var(--text)'">${g.name}</a></td>
+        <td class="left"><span style="display:inline-flex;align-items:center;gap:5px;font-size:13px;"><span style="width:8px;height:8px;border-radius:50%;background:${tColor};display:inline-block;"></span>${g.team}</span></td>
+        <td><span style="font-weight:700;color:${decColor};">${g.dec}</span></td>
+        <td>${g.ga}</td>
+        <td><span class="stat-hi">${g.ga}.00</span></td>
+        <td>${g.so>0?`<span class="stat-hi">${g.so}</span>`:g.so}</td>
+        <td>${g.pim>0?`<span style="color:#dc2626;font-weight:600;">${g.pim}</span>`:g.pim}</td>
       </tr>`;
     }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:1.5rem;">No goalie data for this game.</td></tr>';
 
-    const hasAnyData = awaySkaters.length || homeSkaters.length || gameGoalies.length;
+    const hasAnyData = awaySkaters.length || homeSkaters.length || sortedGoalies.length;
     if (!hasAnyData) {
       document.getElementById('no-data').style.display = '';
     } else {

@@ -190,7 +190,7 @@ function setHomeSeason(type, btn) {
 }
 
 function renderHomeStandings() {
-  const { roster, gameStats, goalieStats, schedule } = _homeData;
+  const { roster, gameStats, schedule } = _homeData;
   const teams = buildTeams(schedule, _homeSeason);
   const skaterRoster = (roster||[]).filter(p => (p.Pos||"").toUpperCase() !== "G");
   const skaters = aggregateSkaters(skaterRoster, gameStats, schedule, _homeSeason);

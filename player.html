@@ -274,12 +274,11 @@ function filterGames(games) {
 }
 
 async function init() {
-  let gameStats = [], goalieStats = [], roster = [], goalieRoster = [];
+  let gameStats = [], roster = [], goalieRoster = [];
 
   try {
     const data = await loadData();
     gameStats    = data.gameStats    || [];
-    goalieStats  = data.goalieStats  || [];
     roster       = data.roster       || [];
     goalieRoster = roster.filter(p => (p.Pos||'').toUpperCase() === 'G');
 
@@ -343,17 +342,49 @@ async function init() {
   // ── GOALIE ──────────────────────────────────────────────────
   } else {
     _playerIsGoalie = true;
-    _playerRawGoalieGames = goalieStats.filter(r =>
-      (r.Goalie || r.Name || '') === pName && (r.Team || '') === pTeam
-    ).sort((a,b) => String(getDate(a)).localeCompare(String(getDate(b))));
+
+    // Build goalie game log from Schedule (source of truth)
+    const schedule = data.schedule || [];
+    const goaliePIMMap = {};
+    // Build PIM lookup from GameStats Pos=G rows
+    gameStats.filter(r => (r.Pos||'').toUpperCase() === 'G' && (r.Player||r.Name||'') === pName && (r.Team||r.team||'') === pTeam)
+      .forEach(r => {
+        const d = normDate(r.Date || r.GameDate || '');
+        goaliePIMMap[d] = (goaliePIMMap[d] || 0) + Number(r.PIM || 0);
+      });
+
+    // Each played game this goalie's team played = one game log row
+    _playerRawGoalieGames = schedule
+      .filter(g => g.Status !== 'Upcoming' && g.HomeScore !== '' && g.AwayScore !== '' &&
+                   (g.Home === pTeam || g.Away === pTeam))
+      .map(g => {
+        const hs = Number(g.HomeScore), as = Number(g.AwayScore);
+        const isHome = g.Home === pTeam;
+        const myScore = isHome ? hs : as;
+        const oppScore = isHome ? as : hs;
+        const isTie = hs === as;
+        const d = normDate(g.Date);
+        return {
+          Date: g.Date,
+          Team: pTeam,
+          W: (!isTie && myScore > oppScore) ? 1 : 0,
+          L: (!isTie && myScore < oppScore) ? 1 : 0,
+          T: isTie ? 1 : 0,
+          GA: oppScore,
+          SO: oppScore === 0 ? 1 : 0,
+          PIM: goaliePIMMap[d] || 0,
+          Playoff: g.Playoff || '0',
+        };
+      })
+      .sort((a,b) => String(a.Date).localeCompare(String(b.Date)));
 
     const info = goalieRoster.find(r => r.Name === pName && r.Team === pTeam) || {};
     const allGames = _playerRawGoalieGames;
-    const totW   = allGames.reduce((s,r) => s + Number(r.W  ||0), 0);
-    const totL   = allGames.reduce((s,r) => s + Number(r.L  ||0), 0);
-    const totT   = allGames.reduce((s,r) => s + Number(r.T  ||0), 0);
-    const totGA  = allGames.reduce((s,r) => s + Number(r.GA ||0), 0);
-    const totSO  = allGames.reduce((s,r) => s + Number(r.SO ||0), 0);
+    const totW   = allGames.reduce((s,r) => s + r.W, 0);
+    const totL   = allGames.reduce((s,r) => s + r.L, 0);
+    const totT   = allGames.reduce((s,r) => s + r.T, 0);
+    const totGA  = allGames.reduce((s,r) => s + r.GA, 0);
+    const totSO  = allGames.reduce((s,r) => s + r.SO, 0);
     const totGP  = totW + totL + totT;
     const totGAA = totGP > 0 ? (totGA / totGP).toFixed(2) : '0.00';
 

@@ -274,7 +274,7 @@ window.setStatsSeason = function(type, btn) {
   document.querySelectorAll('#stats-season-toggle .s-btn').forEach(b => {
     b.className = 's-btn' + (b === btn ? (type === 'playoff' ? ' active-playoff' : type === 'all' ? ' active-combined' : ' active') : '');
   });
-  const { roster, gameStats, goalieStats, schedule } = _statsData;
+  const { roster, gameStats, schedule } = _statsData;
   allSkaters = aggregateSkaters(roster, gameStats, schedule, _statsSeason);
   allGoalies = aggregateGoalies((roster||[]).filter(p=>(p.Pos||"").toUpperCase()==="G"), gameStats, schedule, _statsSeason);
   renderSkaters();

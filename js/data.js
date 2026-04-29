@@ -22,7 +22,6 @@ const SHEET_ID = '1M9EnwzwTgtJqMJid-z1YQ4cah4gsP4Wozv53wlwG1VQ';
 const TAB_NAMES = {
   roster:       'Roster',
   gameStats:    'GameStats',
-  goalieStats:  'GoalieStats',
   schedule:     'Schedule',
   registration: 'Registration',
   roundRobin:   'Round Robin',
@@ -117,7 +116,7 @@ function showSheetError() {
     <div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:1.5rem;margin:1rem 0;font-size:15px;color:#991b1b;">
       <strong>⚠️ Could not load data from Google Sheets.</strong><br>
       Please check that your Sheet ID is correct, the sheet is published to the web,
-      and all required tabs exist (Roster, GoalieRoster, GameStats, GoalieStats, Schedule).
+      and all required tabs exist (Roster, GameStats, Schedule).
     </div>`;
   document.querySelectorAll('main .container, main').forEach(el => {
     if (!el.querySelector('.sheet-error')) {
@@ -327,10 +326,9 @@ async function loadData() {
   if (_cache) return _cache;
   const usingPlaceholder = SHEET_ID === PLACEHOLDER_SHEET_ID;
   try {
-    const [roster, gameStats, goalieStats, schedule] = await Promise.all([
+    const [roster, gameStats, schedule] = await Promise.all([
       fetchTab(TAB_NAMES.roster),
       fetchTab(TAB_NAMES.gameStats),
-      fetchTab(TAB_NAMES.goalieStats),
       fetchTab(TAB_NAMES.schedule),
     ]);
     // Split roster into skaters (non-G) and goalies (Pos = G)
@@ -340,7 +338,7 @@ async function loadData() {
     const skaters = aggregateSkaters(skaterRoster, gameStats, schedule, 'all');
     const goalies = aggregateGoalies(goalieRoster, gameStats, schedule, 'all');
     const teams   = buildTeams(schedule, 'all');
-    _cache = { teams, skaters, goalies, schedule, roster, skaterRoster, goalieRoster, gameStats, goalieStats };
+    _cache = { teams, skaters, goalies, schedule, roster, skaterRoster, goalieRoster, gameStats };
     return _cache;
   } catch (e) {
     console.error('Failed to load Google Sheets data:', e);
@@ -356,7 +354,6 @@ async function loadData() {
       g.GAA = gp > 0 ? g.GA / gp : 0;
     });
     FALLBACK_DATA.gameStats = [];
-    FALLBACK_DATA.goalieStats = [];
     FALLBACK_DATA.roster = [];
     FALLBACK_DATA.skaterRoster = [];
     FALLBACK_DATA.goalieRoster = [];

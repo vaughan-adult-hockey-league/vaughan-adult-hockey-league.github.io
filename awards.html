@@ -206,7 +206,7 @@ function awardCard(icon, name, desc, winnerHtml, subHtml) {
 }
 
 function buildRegularAwards(data) {
-  const { roster, gameStats, goalieStats, schedule } = data;
+  const { roster, gameStats, schedule } = data;
 
   const skaterRoster = (roster||[]).filter(p => (p.Pos||"").toUpperCase() !== "G");
   const skaters = aggregateSkaters(skaterRoster, gameStats, schedule, 'regular');
@@ -355,7 +355,7 @@ function buildRegularAwards(data) {
 }
 
 async function buildPlayoffAwards(data, rrData) {
-  const { roster, gameStats, goalieStats, schedule } = data;
+  const { roster, gameStats, schedule } = data;
 
   const playoffGames = schedule.filter(g => Number(g.Playoff||0) === 1);
   const allPlayoffPlayed = playoffGames.length > 0 && playoffGames.every(g => g.Status !== 'Upcoming');

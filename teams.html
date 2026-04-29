@@ -135,7 +135,7 @@ function h2hRecord(team, opponent, schedule, seasonType) {
 }
 
 function renderTeams() {
-  const { roster, gameStats, goalieStats, schedule } = _teamsData;
+  const { roster, gameStats, schedule } = _teamsData;
   const teams = buildTeams(schedule, _teamsSeason);
   const skaterRoster = (roster||[]).filter(p => (p.Pos||"").toUpperCase() !== "G");
   const skaters = aggregateSkaters(skaterRoster, gameStats, schedule, _teamsSeason);
