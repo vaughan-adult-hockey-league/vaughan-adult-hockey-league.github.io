@@ -324,11 +324,52 @@ let _cache = null;
 let _miscCache = null;
 let _rrCache = null;
 
+// Cache key and TTL (5 minutes — fresh enough for live scores)
+const CACHE_KEY = 'vahl_data_v2';
+const CACHE_TTL = 5 * 60 * 1000;
+
+function _saveToSession(raw) {
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: raw }));
+  } catch(e) {} // sessionStorage may be full or unavailable
+}
+
+function _loadFromSession() {
+  try {
+    const item = sessionStorage.getItem(CACHE_KEY);
+    if (!item) return null;
+    const { ts, data } = JSON.parse(item);
+    if (Date.now() - ts > CACHE_TTL) { sessionStorage.removeItem(CACHE_KEY); return null; }
+    return data;
+  } catch(e) { return null; }
+}
+
+function _rebuildFromRaw(raw) {
+  // Re-derive computed fields from raw data after restoring from sessionStorage
+  const { roster, gameStats, schedule, misc, roundRobin } = raw;
+  const skaterRoster = roster.filter(p => (p.Pos || '').toUpperCase() !== 'G');
+  const goalieRoster = roster.filter(p => (p.Pos || '').toUpperCase() === 'G');
+  const skaters = aggregateSkaters(skaterRoster, gameStats, schedule, 'all');
+  const goalies = aggregateGoalies(goalieRoster, gameStats, schedule, 'all');
+  const teams   = buildTeams(schedule, 'all');
+  return { teams, skaters, goalies, schedule, roster, skaterRoster, goalieRoster, gameStats, misc, roundRobin };
+}
+
 async function loadData() {
   if (_cache) return _cache;
+
+  // Try sessionStorage first — avoids all network requests on page switches
+  const sessionRaw = _loadFromSession();
+  if (sessionRaw) {
+    _miscCache = sessionRaw.misc || {};
+    _rrCache   = sessionRaw.roundRobin || {};
+    _cache = _rebuildFromRaw(sessionRaw);
+    return _cache;
+  }
+
   const usingPlaceholder = SHEET_ID === PLACEHOLDER_SHEET_ID;
   try {
-    // Fetch all tabs in parallel — including Misc and Round Robin
+    // Fetch all tabs in parallel
     const [roster, gameStats, schedule, miscRaw, rrRaw] = await Promise.all([
       fetchTab(TAB_NAMES.roster),
       fetchTab(TAB_NAMES.gameStats),
@@ -337,20 +378,20 @@ async function loadData() {
       fetchTab(TAB_NAMES.roundRobin).catch(() => []),
     ]);
 
-    // Parse Misc tab — fetchTab already returns row objects keyed by column header
     _miscCache = miscRaw.length ? miscRaw[0] : {};
+    _rrCache   = rrRaw.length   ? rrRaw[0]   : {};
 
-    // Parse Round Robin tab
-    _rrCache = rrRaw.length ? rrRaw[0] : {};
-
-    // Split roster into skaters (non-G) and goalies (Pos = G)
     const skaterRoster = roster.filter(p => (p.Pos || '').toUpperCase() !== 'G');
     const goalieRoster = roster.filter(p => (p.Pos || '').toUpperCase() === 'G');
-
     const skaters = aggregateSkaters(skaterRoster, gameStats, schedule, 'all');
     const goalies = aggregateGoalies(goalieRoster, gameStats, schedule, 'all');
     const teams   = buildTeams(schedule, 'all');
+
     _cache = { teams, skaters, goalies, schedule, roster, skaterRoster, goalieRoster, gameStats, misc: _miscCache, roundRobin: _rrCache };
+
+    // Save raw fetched data to sessionStorage for subsequent page loads
+    _saveToSession({ roster, gameStats, schedule, misc: _miscCache, roundRobin: _rrCache });
+
     return _cache;
   } catch (e) {
     console.error('Failed to load Google Sheets data:', e);
