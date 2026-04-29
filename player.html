@@ -131,21 +131,10 @@
   <script>
     (function() {
       var s = sessionStorage.getItem('vahl_season_label');
-      if (!s) return; // No cache yet — async fetch will update after load
-      // Hide before paint so the placeholder never shows
-      document.write('<style>.season-label{visibility:hidden}</style>');
-      // Reveal with correct text as soon as DOM is ready
-      function applyLabel() {
-        document.querySelectorAll('.season-label').forEach(function(el) {
-          el.textContent = s;
-          el.style.visibility = '';
-        });
-      }
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', applyLabel);
-      } else {
-        applyLabel();
-      }
+      if (!s) return;
+      document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.season-label').forEach(function(el) { el.textContent = s; });
+      });
     })();
   </script>
 </head>

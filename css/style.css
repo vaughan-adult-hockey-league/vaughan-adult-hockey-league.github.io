@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scrollbar-gutter: stable; }
 
 :root {
   --blue: #1e40af; --blue-light: #dbeafe; --blue-mid: #1d4ed8; --blue-muted: #93c5fd;
