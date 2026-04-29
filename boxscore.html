@@ -364,12 +364,32 @@ async function init() {
     skatersTable(enrich(homeSkaters), 'home-skaters-body', 'home-skaters-foot', homeColor);
 
     // Derive per-game goalie stats from Schedule + GoalieRoster
+    // Build goalie map — non-rental takes priority over rental
     const goalieRosterMap = {};
-    (goalieRoster||[]).forEach(g => { goalieRosterMap[g.Team] = g; });
+    (goalieRoster||[]).forEach(g => {
+      const existing = goalieRosterMap[g.Team];
+      const gIsRental = (g.Name||'').toLowerCase().includes('rental');
+      // Only overwrite if current slot is empty or existing is a rental being replaced by a real goalie
+      if (!existing || (!gIsRental && (existing.Name||'').toLowerCase().includes('rental'))) {
+        goalieRosterMap[g.Team] = g;
+      }
+    });
+
+    // Build GameStats goalie lookup for this game
+    const gsGameGoalie = {};
+    gameStats.filter(r => {
+      const d = normaliseDate(r.Date || r.GameDate || '');
+      return (r.Pos||'').toUpperCase() === 'G' && d === normGameDate;
+    }).forEach(r => { gsGameGoalie[r.Team||r.team||''] = r.Player||r.Name||''; });
 
     const sortedGoalies = [gameAway, gameHome].map(team => {
-      const gr = goalieRosterMap[team];
+      // Use GameStats goalie name if available, otherwise fall back to roster
+      const gsName = gsGameGoalie[team];
+      const gr = gsName
+        ? (goalieRoster||[]).find(g => g.Name === gsName && g.Team === team) || goalieRosterMap[team]
+        : goalieRosterMap[team];
       if (!gr) return null;
+      const goalieName = gsName || gr.Name;
       const isHome = team === gameHome;
       const myScore = isHome ? homeScore : awayScore;
       const oppScore = isHome ? awayScore : homeScore;
@@ -383,7 +403,7 @@ async function init() {
         const d = normaliseDate(r.Date || r.GameDate || '');
         return pos === 'G' && r.Team === team && d === normGameDate;
       }).reduce((s,r) => s + Number(r.PIM||0), 0);
-      return { name: gr.Name, team, jersey: gr.Jersey || '–', dec, ga, so, pim };
+      return { name: goalieName, team, jersey: gr.Jersey || '–', dec, ga, so, pim };
     }).filter(Boolean);
 
     document.getElementById('goalies-body').innerHTML = sortedGoalies.map(g => {

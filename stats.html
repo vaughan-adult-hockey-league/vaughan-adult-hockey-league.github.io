@@ -225,7 +225,9 @@ function renderSkaters() {
 }
 
 function renderGoalies() {
-  const data = goalieFilter === 'All' ? allGoalies : allGoalies.filter(p => p.Team === goalieFilter);
+  const data = goalieFilter === 'All'
+    ? allGoalies.filter(p => !(p.Name||'').toLowerCase().includes('rental'))
+    : allGoalies.filter(p => p.Team === goalieFilter);
   const sorted = [...data].sort((a,b) => goalieDir * (colVal(a, goalieSort) - colVal(b, goalieSort)));
   document.getElementById('goalies-body').innerHTML = sorted.map((p, i) => `
     <tr>
