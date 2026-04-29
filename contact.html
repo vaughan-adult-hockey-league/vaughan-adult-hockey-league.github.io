@@ -185,12 +185,17 @@
     }
   </script>
   <script>
-    // Apply cached season label synchronously before first paint — no flash
+    // Season label: hide instantly via injected style, reveal with correct text after DOM ready
     (function() {
       var s = sessionStorage.getItem('vahl_season_label');
       if (s) {
+        // Inject a style to hide season labels before paint
+        document.write('<style>.season-label{visibility:hidden}</style>');
         document.addEventListener('DOMContentLoaded', function() {
-          document.querySelectorAll('.season-label').forEach(function(el) { el.textContent = s; });
+          document.querySelectorAll('.season-label').forEach(function(el) {
+            el.textContent = s;
+            el.style.visibility = '';
+          });
         });
       }
     })();
