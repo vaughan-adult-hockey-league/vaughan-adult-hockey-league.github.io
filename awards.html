@@ -292,45 +292,53 @@ function buildRegularAwards(data) {
       '<span style="color:var(--text-muted);">No defencemen found in roster</span>', '');
   }
 
-  // 5. Vezina Trophy — Lowest GAA, tiebreaker: W then SO then fewest PIM, shared if still tied
-  const eligibleGoalies = goalies.filter(g => (g.W + g.L + g.T) >= 1);
-  const sortedGoalies = [...eligibleGoalies].sort((a,b) => {
-    if (a.GAA !== b.GAA) return a.GAA - b.GAA;
-    if (b.W !== a.W) return b.W - a.W;
-    if (b.SO !== a.SO) return b.SO - a.SO;
-    return Number(a.PIM||0) - Number(b.PIM||0);
-  });
-  const topGAA = sortedGoalies[0]?.GAA;
-  const vezinaTied = sortedGoalies.filter(g => g.GAA === topGAA);
-  // Apply tiebreakers sequentially, share if still tied after all
-  let vezinaWinners = vezinaTied;
-  if (vezinaWinners.length > 1) {
-    const maxW = Math.max(...vezinaWinners.map(g => g.W));
-    vezinaWinners = vezinaWinners.filter(g => g.W === maxW);
-  }
-  if (vezinaWinners.length > 1) {
-    const maxSO = Math.max(...vezinaWinners.map(g => g.SO));
-    vezinaWinners = vezinaWinners.filter(g => g.SO === maxSO);
-  }
-  if (vezinaWinners.length > 1) {
-    const minPIM = Math.min(...vezinaWinners.map(g => Number(g.PIM||0)));
-    vezinaWinners = vezinaWinners.filter(g => Number(g.PIM||0) === minPIM);
-  }
-  if (vezinaWinners.length === 1) {
-    const g = vezinaWinners[0];
+  // 5. Vezina Trophy — Lowest GAA (min 12 GP), tiebreaker: W then SO then fewest PIM
+  // GAA is compared rounded to 2 decimal places to avoid float precision issues
+  // (e.g. 59/20=2.9500 and 56/19=2.9473 both display as 2.95 but differ as floats)
+  const eligibleGoalies = goalies.filter(g => (g.W + g.L + g.T) >= 12);
+  if (eligibleGoalies.length === 0) {
     html += awardCard('🥅', 'Vezina Trophy',
-      'Awarded to the goalie with the lowest GAA. Tiebreaker: most wins, most shutouts, fewest PIM.',
-      `${teamDotHtml(g.Team)}<a href="player.html?name=${encodeURIComponent(g.Name)}&team=${encodeURIComponent(g.Team)}&type=goalie">${g.Name}</a>`,
-      `${g.GAA.toFixed(2)} GAA · ${g.W}W · ${g.SO} SO · ${g.Team}`
-    );
-  } else if (vezinaWinners.length > 1) {
-    const winnerStr = vezinaWinners.map(g =>
-      `<div style="margin-bottom:4px;">${teamDotHtml(g.Team)}<a href="player.html?name=${encodeURIComponent(g.Name)}&team=${encodeURIComponent(g.Team)}&type=goalie">${g.Name}</a><span style="font-size:13px;color:var(--text-muted);margin-left:6px;">${g.GAA.toFixed(2)} GAA · ${g.W}W · ${g.SO} SO · ${g.Team}</span></div>`
-    ).join('');
-    html += awardCard('🥅', 'Vezina Trophy',
-      'Awarded to the goalie with the lowest GAA. Tiebreaker: most wins, most shutouts, fewest PIM.',
-      winnerStr, 'Tied award — shared by ' + vezinaWinners.length + ' goalies'
-    );
+      'Awarded to the goalie with the lowest GAA (minimum 12 games played). Tiebreaker: most wins, most shutouts, fewest PIM.',
+      '<span style="color:var(--text-muted);">No goalies have played the minimum 12 games yet</span>', '');
+  } else {
+    const sortedGoalies = [...eligibleGoalies].sort((a,b) => {
+      const aGAA = Math.round(a.GAA * 100);
+      const bGAA = Math.round(b.GAA * 100);
+      if (aGAA !== bGAA) return aGAA - bGAA;
+      if (b.W !== a.W) return b.W - a.W;
+      if (b.SO !== a.SO) return b.SO - a.SO;
+      return Number(a.PIM||0) - Number(b.PIM||0);
+    });
+    const topGAA = Math.round(sortedGoalies[0].GAA * 100);
+    let vezinaWinners = sortedGoalies.filter(g => Math.round(g.GAA * 100) === topGAA);
+    if (vezinaWinners.length > 1) {
+      const maxW = Math.max(...vezinaWinners.map(g => g.W));
+      vezinaWinners = vezinaWinners.filter(g => g.W === maxW);
+    }
+    if (vezinaWinners.length > 1) {
+      const maxSO = Math.max(...vezinaWinners.map(g => g.SO));
+      vezinaWinners = vezinaWinners.filter(g => g.SO === maxSO);
+    }
+    if (vezinaWinners.length > 1) {
+      const minPIM = Math.min(...vezinaWinners.map(g => Number(g.PIM||0)));
+      vezinaWinners = vezinaWinners.filter(g => Number(g.PIM||0) === minPIM);
+    }
+    if (vezinaWinners.length === 1) {
+      const g = vezinaWinners[0];
+      html += awardCard('🥅', 'Vezina Trophy',
+        'Awarded to the goalie with the lowest GAA (minimum 12 games played). Tiebreaker: most wins, most shutouts, fewest PIM.',
+        `${teamDotHtml(g.Team)}<a href="player.html?name=${encodeURIComponent(g.Name)}&team=${encodeURIComponent(g.Team)}&type=goalie">${g.Name}</a>`,
+        `${g.GAA.toFixed(2)} GAA · ${g.W}W · ${g.SO} SO · ${g.Team}`
+      );
+    } else {
+      const winnerStr = vezinaWinners.map(g =>
+        `<div style="margin-bottom:4px;">${teamDotHtml(g.Team)}<a href="player.html?name=${encodeURIComponent(g.Name)}&team=${encodeURIComponent(g.Team)}&type=goalie">${g.Name}</a><span style="font-size:13px;color:var(--text-muted);margin-left:6px;">${g.GAA.toFixed(2)} GAA · ${g.W}W · ${g.SO} SO · ${g.Team}</span></div>`
+      ).join('');
+      html += awardCard('🥅', 'Vezina Trophy',
+        'Awarded to the goalie with the lowest GAA (minimum 12 games played). Tiebreaker: most wins, most shutouts, fewest PIM.',
+        winnerStr, 'Tied award — shared by ' + vezinaWinners.length + ' goalies'
+      );
+    }
   }
 
   // 6. Lady Byng — All players with 0 PIM
