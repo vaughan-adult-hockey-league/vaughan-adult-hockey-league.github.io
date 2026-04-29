@@ -230,6 +230,11 @@
             <label for="message">Message</label>
             <textarea id="message" name="message" placeholder="Write your message here…" required></textarea>
           </div>
+          <!-- Honeypot — hidden from real users, catches bots -->
+          <div style="display:none;" aria-hidden="true">
+            <label for="_hp_contact">Leave this blank</label>
+            <input type="text" id="_hp_contact" name="_hp_contact" tabindex="-1" autocomplete="off"/>
+          </div>
           <button type="submit" class="submit-btn" id="submit-btn">Send Message</button>
           <div class="status-msg" id="status-msg"></div>
         </form>
@@ -322,6 +327,14 @@ async function sendEmail(e) {
   const btn = document.getElementById('submit-btn');
   const status = document.getElementById('status-msg');
   const form = document.getElementById('contact-form');
+
+  // Honeypot check — silently succeed if bot filled the hidden field
+  if (document.getElementById('_hp_contact')?.value) {
+    form.reset();
+    status.textContent = '✓ Message sent! We\'ll get back to you soon.';
+    status.className = 'status-msg success';
+    return;
+  }
 
   btn.disabled = true;
   btn.textContent = 'Sending…';
