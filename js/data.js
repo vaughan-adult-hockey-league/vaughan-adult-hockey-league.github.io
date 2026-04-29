@@ -415,11 +415,20 @@ async function loadData() {
 }
 
 // ── Registration window ────────────────────────────────────────
+let _regCache = null;
 async function fetchRegistrationWindow() {
+  if (_regCache) return _regCache;
+  // Check sessionStorage
+  try {
+    const stored = sessionStorage.getItem('vahl_reg_window');
+    if (stored) { _regCache = JSON.parse(stored); return _regCache; }
+  } catch(e) {}
   try {
     const rows = await fetchTab(TAB_NAMES.registration);
     const obj = {};
     rows.forEach(r => { if (r.Key) obj[r.Key.trim()] = String(r.Value).trim(); });
+    _regCache = obj;
+    try { sessionStorage.setItem('vahl_reg_window', JSON.stringify(obj)); } catch(e) {}
     return obj;
   } catch (e) { return null; }
 }
