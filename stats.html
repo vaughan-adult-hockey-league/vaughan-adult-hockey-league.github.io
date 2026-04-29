@@ -112,6 +112,7 @@
           </tr>
         </thead>
         <tbody id="skaters-body"></tbody>
+        <tfoot id="skaters-foot"></tfoot>
       </table>
     </div>
   </div>
@@ -143,6 +144,7 @@
           </tr>
         </thead>
         <tbody id="goalies-body"></tbody>
+        <tfoot id="goalies-foot"></tfoot>
       </table>
     </div>
   </div>
@@ -201,6 +203,23 @@ function renderSkaters() {
       <td style="padding-top:0.3rem;padding-bottom:0.3rem;"><span class="${skaterSort==='a'?'stat-hi':''}">${p.A}</span></td>
       <td style="padding-top:0.3rem;padding-bottom:0.3rem;"><span class="${skaterSort==='pim'?'stat-hi':''}">${p.PIM}</span></td>
     </tr>`).join('');
+
+  // Totals row — only shown when a team is filtered
+  const foot = document.getElementById('skaters-foot');
+  if (skaterFilter !== 'All' && sorted.length > 0) {
+    const totG   = sorted.reduce((s,p) => s + Number(p.G||0), 0);
+    const totA   = sorted.reduce((s,p) => s + Number(p.A||0), 0);
+    const totPIM = sorted.reduce((s,p) => s + Number(p.PIM||0), 0);
+    foot.innerHTML = `<tr style="background:#eff6ff;">
+      <td colspan="5" style="padding:0.4rem 0.85rem;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#1e40af;">Total</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totG+totA}</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totG}</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totA}</td>
+      <td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${totPIM}</td>
+    </tr>`;
+  } else {
+    foot.innerHTML = '';
+  }
 }
 
 function renderGoalies() {
@@ -222,6 +241,26 @@ function renderGoalies() {
       <td style="padding-top:0.3rem;padding-bottom:0.3rem;"><span class="${goalieSort==='so'?'stat-hi':''}">${p.SO}</span></td>
       <td style="padding-top:0.3rem;padding-bottom:0.3rem;">${p.PIM}</td>
     </tr>`).join('');
+
+  // Totals row — only shown when a team is filtered
+  const foot = document.getElementById('goalies-foot');
+  if (goalieFilter !== 'All' && sorted.length > 0) {
+    const totW   = sorted.reduce((s,p) => s + Number(p.W||0), 0);
+    const totL   = sorted.reduce((s,p) => s + Number(p.L||0), 0);
+    const totT   = sorted.reduce((s,p) => s + Number(p.T||0), 0);
+    const totGA  = sorted.reduce((s,p) => s + Number(p.GA||0), 0);
+    const totSO  = sorted.reduce((s,p) => s + Number(p.SO||0), 0);
+    const totPIM = sorted.reduce((s,p) => s + Number(p.PIM||0), 0);
+    const totGP  = totW + totL + totT;
+    const totGAA = totGP > 0 ? (totGA / totGP).toFixed(2) : '0.00';
+    const cell = v => `<td style="padding:0.4rem 0.85rem;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;color:#1e40af;">${v}</td>`;
+    foot.innerHTML = `<tr style="background:#eff6ff;">
+      <td colspan="4" style="padding:0.4rem 0.85rem;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#1e40af;">Total</td>
+      ${cell(totW)}${cell(totL)}${cell(totT)}${cell(totGA)}${cell(totGAA)}${cell(totSO)}${cell(totPIM)}
+    </tr>`;
+  } else {
+    foot.innerHTML = '';
+  }
 }
 
 // Sortable column headers

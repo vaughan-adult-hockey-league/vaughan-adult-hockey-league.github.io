@@ -128,6 +128,15 @@ function showSheetError() {
   });
 }
 
+
+// ── Rental goalie detection ────────────────────────────────────
+// Any player whose name contains "Rental" (case-insensitive) is a
+// rental goalie — excluded from skater tables and player profiles,
+// but their W/L/T/GA/GAA/SO still appear in Goaltenders tables.
+function isRental(name) {
+  return String(name || '').toLowerCase().includes('rental');
+}
+
 // ── Build a fast date+team → game info lookup from Schedule ────
 // Includes Playoff flag from Schedule tab
 function buildGameLookup(schedule) {
@@ -159,11 +168,13 @@ function aggregateSkaters(roster, gameStats, schedule, seasonType = 'all') {
   const hasPlayoffData = schedule.some(g => Number(g.Playoff || 0) === 1);
   const players = {};
   roster.forEach(p => {
+    if (isRental(p.Name)) return; // Rental goalies excluded from skater tables
     const key = `${p.Name}|${p.Team}`;
     players[key] = { Name: p.Name, Team: p.Team, Jersey: p.Jersey || '', Pos: p.Pos || 'F', G: 0, A: 0, PTS: 0, PIM: 0 };
   });
   gameStats.forEach(row => {
     const playerName = row.Player || row.Name || row.player || '';
+    if (isRental(playerName)) return; // Skip rental goalies in skater stats
     const team = row.Team || row.team || '';
     const dateRaw = row.Date || row.GameDate || row['Game Date'] || row.date ||
       Object.values(row).find(v => v && String(v).match(/\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}|[A-Z][a-z]{2}\s+\d/)) || '';
@@ -194,16 +205,18 @@ function aggregateSkaters(roster, gameStats, schedule, seasonType = 'all') {
 }
 
 // ── Aggregate goalie stats ─────────────────────────────────────
-// W/L/T/GA/SO/GAA are derived from the Schedule tab (source of truth).
-// A tie is detected when HomeScore === AwayScore (regardless of Status).
-// PIM is read from GameStats rows where Pos = G, or falls back to GoalieStats.
+// W/L/T/GA/SO/GAA derived from Schedule (source of truth).
+// Ties detected by score equality regardless of Status field.
+// Which goalie played each game: read from GameStats rows with Pos=G.
+// Falls back to GoalieRoster if no GameStats entry for that game.
+// Supports multiple goalies per team mid-season.
 // seasonType: 'regular' | 'playoff' | 'all'
 function aggregateGoalies(goalieRoster, gameStats, schedule, seasonType = 'all') {
   const hasPlayoffData = schedule.some(g => Number(g.Playoff || 0) === 1);
 
-  // Build PIM lookup from GameStats rows with Pos = G
-  // Key: goalieName|team|dateStr → PIM
-  const pimLookup = {};
+  // Build lookup: dateStr|team → { goalieName, pim }
+  // from GameStats rows where Pos = G
+  const gsGoalieLookup = {};
   gameStats.forEach(row => {
     const pos = (row.Pos || row.pos || '').toUpperCase();
     if (pos !== 'G') return;
@@ -211,21 +224,22 @@ function aggregateGoalies(goalieRoster, gameStats, schedule, seasonType = 'all')
     const team = row.Team || row.team || '';
     const dateRaw = row.Date || row.GameDate || row['Game Date'] || '';
     const dateStr = normaliseDate(dateRaw);
-    const key = `${name}|${team}|${dateStr}`;
-    pimLookup[key] = (pimLookup[key] || 0) + Number(row.PIM || 0);
+    const key = `${dateStr}|${team}`;
+    if (!gsGoalieLookup[key]) gsGoalieLookup[key] = { name, pim: 0 };
+    gsGoalieLookup[key].pim += Number(row.PIM || 0);
   });
 
-  // Build goalie registry from GoalieRoster
+  // Build goalie registry — seed from GoalieRoster, excluding rentals
   const goalies = {};
   goalieRoster.forEach(g => {
+    if (isRental(g.Name)) return; // Rentals excluded from leaderboard
     const key = `${g.Name}|${g.Team}`;
     goalies[key] = { Name: g.Name, Team: g.Team, Jersey: g.Jersey || '', W: 0, L: 0, T: 0, GA: 0, SO: 0, PIM: 0, GAA: 0 };
   });
 
-  // Process each played schedule game and derive goalie stats
+  // Process each played schedule game
   const playedGames = schedule.filter(g => {
     if (g.Status === 'Upcoming' || g.HomeScore === '' || g.AwayScore === '') return false;
-    // Season type filter
     if (seasonType !== 'all') {
       if (!hasPlayoffData) return seasonType === 'regular';
       const isPlayoff = Number(g.Playoff || 0) === 1;
@@ -242,35 +256,32 @@ function aggregateGoalies(goalieRoster, gameStats, schedule, seasonType = 'all')
 
     for (const [team, oppScore, myScore] of [
       [g.Home, awayScore, homeScore],
-      [g.Away, homeScore, awayScore]
+      [g.Away, homeScore, awayScore],
     ]) {
-      // Find this team's goalie from GoalieRoster
-      const goalie = goalieRoster.find(gr => gr.Team === team);
-      if (!goalie) continue;
+      // Find which goalie played: GameStats first, then GoalieRoster fallback
+      const gsEntry = gsGoalieLookup[`${dateStr}|${team}`];
+      const goalieName = gsEntry?.name || goalieRoster.find(gr => gr.Team === team)?.Name;
+      if (!goalieName) continue;
 
-      const key = `${goalie.Name}|${team}`;
+      const rosterEntry = goalieRoster.find(gr => gr.Name === goalieName && gr.Team === team)
+                       || goalieRoster.find(gr => gr.Team === team);
+      const jersey = rosterEntry?.Jersey || '';
+      const key = `${goalieName}|${team}`;
+
       if (!goalies[key]) {
-        goalies[key] = { Name: goalie.Name, Team: team, Jersey: goalie.Jersey || '', W: 0, L: 0, T: 0, GA: 0, SO: 0, PIM: 0, GAA: 0 };
+        goalies[key] = { Name: goalieName, Team: team, Jersey: jersey, W: 0, L: 0, T: 0, GA: 0, SO: 0, PIM: 0, GAA: 0 };
       }
 
-      // Derive W/L/T from scores
-      if (isTie)          { goalies[key].T += 1; }
-      else if (myScore > oppScore) { goalies[key].W += 1; }
-      else                { goalies[key].L += 1; }
+      if (isTie)               goalies[key].T += 1;
+      else if (myScore > oppScore) goalies[key].W += 1;
+      else                     goalies[key].L += 1;
 
-      // GA = opposing team's score
-      goalies[key].GA += oppScore;
-
-      // SO = shutout if opposing team scored 0
+      goalies[key].GA  += oppScore;
       if (oppScore === 0) goalies[key].SO += 1;
-
-      // PIM from GameStats (Pos=G rows), fallback to 0
-      const pimKey = `${goalie.Name}|${team}|${dateStr}`;
-      goalies[key].PIM += pimLookup[pimKey] || 0;
+      goalies[key].PIM += gsEntry?.pim || 0;
     }
   });
 
-  // Calculate GAA
   Object.values(goalies).forEach(g => {
     const gp = g.W + g.L + g.T;
     g.GAA = gp > 0 ? g.GA / gp : 0;

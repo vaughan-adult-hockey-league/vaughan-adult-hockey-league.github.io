@@ -308,6 +308,11 @@ async function init() {
 
   // ── SKATER ──────────────────────────────────────────────────
   if (pType !== 'goalie') {
+    // Rental goalies don't have a skater profile
+    if (pName.toLowerCase().includes('rental')) {
+      document.getElementById('no-data').style.display = '';
+      return;
+    }
     _playerIsGoalie = false;
     _playerRawGames = gameStats.filter(r =>
       (r.Player || r.Name || '') === pName && (r.Team || '') === pTeam
