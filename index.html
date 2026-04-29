@@ -190,10 +190,12 @@ function setHomeSeason(type, btn) {
 }
 
 function renderHomeStandings() {
-  const { roster, goalieRoster, gameStats, goalieStats, schedule } = _homeData;
+  const { roster, gameStats, goalieStats, schedule } = _homeData;
   const teams = buildTeams(schedule, _homeSeason);
-  const skaters = aggregateSkaters(roster, gameStats, schedule, _homeSeason);
-  const goalies = aggregateGoalies(goalieRoster, goalieStats, schedule, _homeSeason);
+  const skaterRoster = (roster||[]).filter(p => (p.Pos||"").toUpperCase() !== "G");
+  const skaters = aggregateSkaters(skaterRoster, gameStats, schedule, _homeSeason);
+  const goalieRoster = (roster||[]).filter(p => (p.Pos||"").toUpperCase() === "G");
+  const goalies = aggregateGoalies(goalieRoster, gameStats, schedule, _homeSeason);
   const isPlayoff = _homeSeason === 'playoff';
 
   // For playoffs, sort by RPTS then W then PTS; for regular use standingsSort
@@ -243,7 +245,8 @@ function renderHomeStandings() {
 
 function renderHomeLeaders() {
   const { roster, gameStats, schedule } = _homeData;
-  const skaters = aggregateSkaters(roster, gameStats, schedule, _homeSeason);
+  const skaterRoster = (roster||[]).filter(p => (p.Pos||"").toUpperCase() !== "G");
+  const skaters = aggregateSkaters(skaterRoster, gameStats, schedule, _homeSeason);
   const topSkaters = [...skaters].sort((a,b) => b.PTS - a.PTS).slice(0,5);
   document.getElementById('leaders-body').innerHTML = topSkaters.map((p,i) => `
     <tr style="${i%2===1?'background:var(--bg);':''}">
@@ -312,7 +315,7 @@ async function init() {
   const lastTwoDates = seenDates.slice(-2);
   const results = playedGames.filter(g => lastTwoDates.includes(g.Date));
   document.getElementById('recent-results').innerHTML = results.map(g => {
-    const isTie = g.Status === 'Tie';
+    const isTie = g.Status === 'Tie' || (Number(g.HomeScore) === Number(g.AwayScore) && g.HomeScore !== '');
     const awayWin = !isTie && Number(g.AwayScore) > Number(g.HomeScore);
     const homeWin = !isTie && Number(g.HomeScore) > Number(g.AwayScore);
     const boxUrl = `boxscore.html?date=${encodeURIComponent(g.Date)}&home=${encodeURIComponent(g.Home)}&away=${encodeURIComponent(g.Away)}`;

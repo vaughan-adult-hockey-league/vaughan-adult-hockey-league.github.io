@@ -206,10 +206,12 @@ function awardCard(icon, name, desc, winnerHtml, subHtml) {
 }
 
 function buildRegularAwards(data) {
-  const { roster, gameStats, goalieStats, goalieRoster, schedule } = data;
+  const { roster, gameStats, goalieStats, schedule } = data;
 
-  const skaters = aggregateSkaters(roster, gameStats, schedule, 'regular');
-  const goalies = aggregateGoalies(goalieRoster, goalieStats, schedule, 'regular');
+  const skaterRoster = (roster||[]).filter(p => (p.Pos||"").toUpperCase() !== "G");
+  const skaters = aggregateSkaters(skaterRoster, gameStats, schedule, 'regular');
+  const goalieRoster = (roster||[]).filter(p => (p.Pos||"").toUpperCase() === "G");
+  const goalies = aggregateGoalies(goalieRoster, gameStats, schedule, 'regular');
   const teams   = buildTeams(schedule, 'regular');
   const sorted  = standingsSort(teams, schedule, skaters, goalies);
 
@@ -353,7 +355,7 @@ function buildRegularAwards(data) {
 }
 
 async function buildPlayoffAwards(data, rrData) {
-  const { roster, gameStats, goalieStats, goalieRoster, schedule } = data;
+  const { roster, gameStats, goalieStats, schedule } = data;
 
   const playoffGames = schedule.filter(g => Number(g.Playoff||0) === 1);
   const allPlayoffPlayed = playoffGames.length > 0 && playoffGames.every(g => g.Status !== 'Upcoming');

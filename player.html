@@ -281,7 +281,7 @@ async function init() {
     gameStats    = data.gameStats    || [];
     goalieStats  = data.goalieStats  || [];
     roster       = data.roster       || [];
-    goalieRoster = data.goalieRoster || [];
+    goalieRoster = roster.filter(p => (p.Pos||'').toUpperCase() === 'G');
 
     (data.schedule || []).filter(g => g.Status !== 'Upcoming').forEach(g => {
       const d = normDate(g.Date);

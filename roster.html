@@ -143,11 +143,13 @@ function setRosterSeason(type, btn) {
 
 async function renderTeam(team, data) {
   _activeRosterTeam = team;
-  const { roster, goalieRoster, gameStats, goalieStats, schedule } = data;
+  const { roster, gameStats, goalieStats, schedule } = data;
 
   // Re-aggregate based on current season type
-  const skaters = aggregateSkaters(roster, gameStats, schedule, _rosterSeason);
-  const goalies = aggregateGoalies(goalieRoster, goalieStats, schedule, _rosterSeason);
+  const skaterRoster = roster; // include all players including goalies (Pos=G)
+  const skaters = aggregateSkaters(skaterRoster, gameStats, schedule, _rosterSeason);
+  const goalieRoster = (roster||[]).filter(p => (p.Pos||"").toUpperCase() === "G");
+  const goalies = aggregateGoalies(goalieRoster, gameStats, schedule, _rosterSeason);
   const teams   = buildTeams(schedule, _rosterSeason);
 
   const teamData = teams.find(t => t.Team === team) || {};

@@ -274,9 +274,9 @@ window.setStatsSeason = function(type, btn) {
   document.querySelectorAll('#stats-season-toggle .s-btn').forEach(b => {
     b.className = 's-btn' + (b === btn ? (type === 'playoff' ? ' active-playoff' : type === 'all' ? ' active-combined' : ' active') : '');
   });
-  const { roster, goalieRoster, gameStats, goalieStats, schedule } = _statsData;
+  const { roster, gameStats, goalieStats, schedule } = _statsData;
   allSkaters = aggregateSkaters(roster, gameStats, schedule, _statsSeason);
-  allGoalies = aggregateGoalies(goalieRoster, goalieStats, schedule, _statsSeason);
+  allGoalies = aggregateGoalies((roster||[]).filter(p=>(p.Pos||"").toUpperCase()==="G"), gameStats, schedule, _statsSeason);
   renderSkaters();
   renderGoalies();
 };
@@ -285,7 +285,7 @@ async function init() {
   const data = await loadData();
   _statsData = data;
   allSkaters = aggregateSkaters(data.roster, data.gameStats, data.schedule, _statsSeason);
-  allGoalies = aggregateGoalies(data.goalieRoster, data.goalieStats, data.schedule, _statsSeason);
+  allGoalies = aggregateGoalies((data.roster||[]).filter(p=>(p.Pos||"").toUpperCase()==="G"), data.gameStats, data.schedule, _statsSeason);
 
   // Check URL param for team pre-filter
   const params = new URLSearchParams(window.location.search);

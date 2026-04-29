@@ -21,7 +21,6 @@ const SHEET_ID = '1M9EnwzwTgtJqMJid-z1YQ4cah4gsP4Wozv53wlwG1VQ';
 
 const TAB_NAMES = {
   roster:       'Roster',
-  goalieRoster: 'GoalieRoster',
   gameStats:    'GameStats',
   goalieStats:  'GoalieStats',
   schedule:     'Schedule',
@@ -154,8 +153,8 @@ function filterScheduleByPlayoff(rows, seasonType) {
 }
 
 // ── Aggregate skater stats from GameStats ──────────────────────
+// Accepts all roster players including goalies (Pos = G)
 // seasonType: 'regular' | 'playoff' | 'all'
-// Reads Playoff flag from Schedule tab via gameLookup
 function aggregateSkaters(roster, gameStats, schedule, seasonType = 'all') {
   const gameLookup = buildGameLookup(schedule);
   const hasPlayoffData = schedule.some(g => Number(g.Playoff || 0) === 1);
@@ -195,54 +194,89 @@ function aggregateSkaters(roster, gameStats, schedule, seasonType = 'all') {
   return Object.values(players);
 }
 
-// ── Aggregate goalie stats from GoalieStats ────────────────────
+// ── Aggregate goalie stats ─────────────────────────────────────
+// W/L/T/GA/SO/GAA are derived from the Schedule tab (source of truth).
+// A tie is detected when HomeScore === AwayScore (regardless of Status).
+// PIM is read from GameStats rows where Pos = G, or falls back to GoalieStats.
 // seasonType: 'regular' | 'playoff' | 'all'
-// Reads Playoff flag from Schedule tab via gameLookup
-function aggregateGoalies(goalieRoster, goalieStats, schedule, seasonType = 'all') {
-  const gameLookup = buildGameLookup(schedule);
+function aggregateGoalies(goalieRoster, gameStats, schedule, seasonType = 'all') {
+  const hasPlayoffData = schedule.some(g => Number(g.Playoff || 0) === 1);
 
-  // Check if Schedule has any Playoff column set at all
-  const hasPlayoffData = schedule.some(g => g.Playoff !== undefined && g.Playoff !== '' && Number(g.Playoff) === 1);
+  // Build PIM lookup from GameStats rows with Pos = G
+  // Key: goalieName|team|dateStr → PIM
+  const pimLookup = {};
+  gameStats.forEach(row => {
+    const pos = (row.Pos || row.pos || '').toUpperCase();
+    if (pos !== 'G') return;
+    const name = row.Player || row.Name || '';
+    const team = row.Team || row.team || '';
+    const dateRaw = row.Date || row.GameDate || row['Game Date'] || '';
+    const dateStr = normaliseDate(dateRaw);
+    const key = `${name}|${team}|${dateStr}`;
+    pimLookup[key] = (pimLookup[key] || 0) + Number(row.PIM || 0);
+  });
 
+  // Build goalie registry from GoalieRoster
   const goalies = {};
   goalieRoster.forEach(g => {
     const key = `${g.Name}|${g.Team}`;
     goalies[key] = { Name: g.Name, Team: g.Team, Jersey: g.Jersey || '', W: 0, L: 0, T: 0, GA: 0, SO: 0, PIM: 0, GAA: 0 };
   });
-  goalieStats.forEach(row => {
-    const goalieName = row.Goalie || row.Name || '';
-    const team = row.Team || '';
-    // Get date — try named columns first, then fall back to first non-empty value
-    const dateRaw = row.Date || row.GameDate || row['Game Date'] || row.date ||
-      Object.values(row).find(v => v && String(v).match(/\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}|[A-Z][a-z]{2}\s+\d/)) || '';
-    const dateStr = normaliseDate(dateRaw);
 
-    // Filter by season type using Schedule's Playoff flag
-    if (seasonType !== 'all' && hasPlayoffData) {
-      const gameInfo = gameLookup[`${dateStr}|${team}`] || {};
-      const isPlayoff = gameInfo.playoff === true;
-      if (seasonType === 'playoff' && !isPlayoff) return;
-      if (seasonType === 'regular' && isPlayoff) return;
-    } else if (seasonType !== 'all' && !hasPlayoffData) {
-      // No playoff data in Schedule yet — show all in regular, none in playoff
-      if (seasonType === 'playoff') return;
+  // Process each played schedule game and derive goalie stats
+  const playedGames = schedule.filter(g => {
+    if (g.Status === 'Upcoming' || g.HomeScore === '' || g.AwayScore === '') return false;
+    // Season type filter
+    if (seasonType !== 'all') {
+      if (!hasPlayoffData) return seasonType === 'regular';
+      const isPlayoff = Number(g.Playoff || 0) === 1;
+      return seasonType === 'playoff' ? isPlayoff : !isPlayoff;
     }
-
-    const key = `${goalieName}|${team}`;
-    if (!goalies[key]) {
-      goalies[key] = { Name: goalieName, Team: team, Jersey: row.Jersey || '', W: 0, L: 0, T: 0, GA: 0, SO: 0, PIM: 0, GAA: 0 };
-    }
-    goalies[key].W   += Number(row.W   || 0);
-    goalies[key].L   += Number(row.L   || 0);
-    goalies[key].T   += Number(row.T   || 0);
-    goalies[key].GA  += Number(row.GA  || 0);
-    goalies[key].SO  += Number(row.SO  || 0);
-    goalies[key].PIM += Number(row.PIM || 0);
+    return true;
   });
+
+  playedGames.forEach(g => {
+    const homeScore = Number(g.HomeScore);
+    const awayScore = Number(g.AwayScore);
+    const isTie = homeScore === awayScore;
+    const dateStr = normaliseDate(g.Date);
+
+    for (const [team, oppScore, myScore] of [
+      [g.Home, awayScore, homeScore],
+      [g.Away, homeScore, awayScore]
+    ]) {
+      // Find this team's goalie from GoalieRoster
+      const goalie = goalieRoster.find(gr => gr.Team === team);
+      if (!goalie) continue;
+
+      const key = `${goalie.Name}|${team}`;
+      if (!goalies[key]) {
+        goalies[key] = { Name: goalie.Name, Team: team, Jersey: goalie.Jersey || '', W: 0, L: 0, T: 0, GA: 0, SO: 0, PIM: 0, GAA: 0 };
+      }
+
+      // Derive W/L/T from scores
+      if (isTie)          { goalies[key].T += 1; }
+      else if (myScore > oppScore) { goalies[key].W += 1; }
+      else                { goalies[key].L += 1; }
+
+      // GA = opposing team's score
+      goalies[key].GA += oppScore;
+
+      // SO = shutout if opposing team scored 0
+      if (oppScore === 0) goalies[key].SO += 1;
+
+      // PIM from GameStats (Pos=G rows), fallback to 0
+      const pimKey = `${goalie.Name}|${team}|${dateStr}`;
+      goalies[key].PIM += pimLookup[pimKey] || 0;
+    }
+  });
+
+  // Calculate GAA
   Object.values(goalies).forEach(g => {
     const gp = g.W + g.L + g.T;
     g.GAA = gp > 0 ? g.GA / gp : 0;
   });
+
   return Object.values(goalies);
 }
 
@@ -254,19 +288,25 @@ function buildTeams(schedule, seasonType = 'all') {
   TEAM_NAMES.forEach(name => {
     teams[name] = { Team: name, W: 0, L: 0, T: 0, PTS: 0, GF: 0, GA: 0 };
   });
-  const rows = schedule.filter(g => g.Status === 'Final' || g.Status === 'Tie');
-  const hasPlayoffData = rows.some(g => Number(g.Playoff || 0) === 1);
-
+  const hasPlayoffData = schedule.some(g => Number(g.Playoff || 0) === 1);
+  const rows = schedule.filter(g => {
+    if (g.Status === 'Upcoming') return false;
+    if (g.HomeScore === '' || g.AwayScore === '') return false;
+    return true;
+  });
   const filtered = (seasonType === 'all') ? rows :
     !hasPlayoffData ? (seasonType === 'playoff' ? [] : rows) :
     filterScheduleByPlayoff(rows, seasonType);
+
   filtered.forEach(g => {
     const hs = Number(g.HomeScore), as = Number(g.AwayScore);
+    // Treat equal scores as tie regardless of Status label
+    const isTie = hs === as;
     if (!teams[g.Home]) teams[g.Home] = { Team: g.Home, W:0, L:0, T:0, PTS:0, GF:0, GA:0 };
     if (!teams[g.Away]) teams[g.Away] = { Team: g.Away, W:0, L:0, T:0, PTS:0, GF:0, GA:0 };
     teams[g.Home].GF += hs; teams[g.Home].GA += as;
     teams[g.Away].GF += as; teams[g.Away].GA += hs;
-    if (g.Status === 'Tie') {
+    if (isTie) {
       teams[g.Home].T += 1; teams[g.Home].PTS += 1;
       teams[g.Away].T += 1; teams[g.Away].PTS += 1;
     } else if (hs > as) {
@@ -287,18 +327,20 @@ async function loadData() {
   if (_cache) return _cache;
   const usingPlaceholder = SHEET_ID === PLACEHOLDER_SHEET_ID;
   try {
-    const [roster, goalieRoster, gameStats, goalieStats, schedule] = await Promise.all([
+    const [roster, gameStats, goalieStats, schedule] = await Promise.all([
       fetchTab(TAB_NAMES.roster),
-      fetchTab(TAB_NAMES.goalieRoster),
       fetchTab(TAB_NAMES.gameStats),
       fetchTab(TAB_NAMES.goalieStats),
       fetchTab(TAB_NAMES.schedule),
     ]);
-    // Cache raw rows so pages can filter by season type at render time
-    const skaters = aggregateSkaters(roster, gameStats, schedule, 'all');
-    const goalies = aggregateGoalies(goalieRoster, goalieStats, schedule, 'all');
+    // Split roster into skaters (non-G) and goalies (Pos = G)
+    const skaterRoster = roster.filter(p => (p.Pos || '').toUpperCase() !== 'G');
+    const goalieRoster = roster.filter(p => (p.Pos || '').toUpperCase() === 'G');
+
+    const skaters = aggregateSkaters(skaterRoster, gameStats, schedule, 'all');
+    const goalies = aggregateGoalies(goalieRoster, gameStats, schedule, 'all');
     const teams   = buildTeams(schedule, 'all');
-    _cache = { teams, skaters, goalies, schedule, roster, goalieRoster, gameStats, goalieStats };
+    _cache = { teams, skaters, goalies, schedule, roster, skaterRoster, goalieRoster, gameStats, goalieStats };
     return _cache;
   } catch (e) {
     console.error('Failed to load Google Sheets data:', e);
@@ -316,6 +358,7 @@ async function loadData() {
     FALLBACK_DATA.gameStats = [];
     FALLBACK_DATA.goalieStats = [];
     FALLBACK_DATA.roster = [];
+    FALLBACK_DATA.skaterRoster = [];
     FALLBACK_DATA.goalieRoster = [];
     return FALLBACK_DATA;
   }

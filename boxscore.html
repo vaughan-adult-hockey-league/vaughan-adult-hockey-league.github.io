@@ -270,7 +270,8 @@ function skatersTable(players, bodyId, footId, teamColor) {
 async function init() {
   try {
     const data = await loadData();
-    const { gameStats, goalieStats, goalieRoster, roster, schedule } = data;
+    const { gameStats, goalieStats, roster, schedule } = data;
+    const goalieRoster = (roster||[]).filter(p => (p.Pos||'').toUpperCase() === 'G');
 
     // Find the game in schedule
     const game = schedule.find(g =>

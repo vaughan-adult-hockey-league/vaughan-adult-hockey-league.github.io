@@ -93,7 +93,7 @@ function streakDots(team, schedule, seasonType) {
   const games = filtered.slice(-5);
   const count = games.length;
   const dots = games.map(g => {
-    const isTie = g.Status === 'Tie';
+    const isTie = g.Status === 'Tie' || (Number(g.HomeScore) === Number(g.AwayScore) && g.HomeScore !== '');
     const won = !isTie && ((g.Home === team && Number(g.HomeScore) > Number(g.AwayScore)) || (g.Away === team && Number(g.AwayScore) > Number(g.HomeScore)));
     const color = won ? '#22c55e' : isTie ? '#ffc949' : 'rgb(255,0,0)';
     const label = won ? 'W' : isTie ? 'T' : 'L';
@@ -124,7 +124,7 @@ function h2hRecord(team, opponent, schedule, seasonType) {
 
   let w=0, l=0, t=0;
   games.forEach(g => {
-    const isTie = g.Status === 'Tie';
+    const isTie = g.Status === 'Tie' || (Number(g.HomeScore) === Number(g.AwayScore) && g.HomeScore !== '');
     const teamScored = g.Home === team ? Number(g.HomeScore) : Number(g.AwayScore);
     const oppScored  = g.Home === team ? Number(g.AwayScore)  : Number(g.HomeScore);
     if (isTie) t++;
@@ -135,10 +135,12 @@ function h2hRecord(team, opponent, schedule, seasonType) {
 }
 
 function renderTeams() {
-  const { roster, goalieRoster, gameStats, goalieStats, schedule } = _teamsData;
+  const { roster, gameStats, goalieStats, schedule } = _teamsData;
   const teams = buildTeams(schedule, _teamsSeason);
-  const skaters = aggregateSkaters(roster, gameStats, schedule, _teamsSeason);
-  const goalies = aggregateGoalies(goalieRoster, goalieStats, schedule, _teamsSeason);
+  const skaterRoster = (roster||[]).filter(p => (p.Pos||"").toUpperCase() !== "G");
+  const skaters = aggregateSkaters(skaterRoster, gameStats, schedule, _teamsSeason);
+  const goalieRoster = (roster||[]).filter(p => (p.Pos||"").toUpperCase() === "G");
+  const goalies = aggregateGoalies(goalieRoster, gameStats, schedule, _teamsSeason);
   const allTeamNames = TEAM_NAMES;
   const isPlayoff = _teamsSeason === 'playoff';
 

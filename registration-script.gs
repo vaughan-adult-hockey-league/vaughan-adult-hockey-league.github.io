@@ -111,18 +111,3 @@ function doGet(e) {
     .createTextOutput('VAHL Registration Script is running.')
     .setMimeType(ContentService.MimeType.TEXT);
 }
-
-// ── Run this function ONCE manually to authorize access to the private sheet ──
-// 1. Select "authorizePrivateSheet" from the function dropdown
-// 2. Click Run (▶)
-// 3. Follow the Google permission prompts
-// 4. After authorizing, you can delete this function if you like
-function authorizePrivateSheet() {
-  try {
-    const ss = SpreadsheetApp.openById('1hmketZzr5PAd7WRxvBv168rUJYCGQKwuIQRaR52VM_w');
-    const sheets = ss.getSheets().map(s => s.getName());
-    Logger.log('✅ Successfully connected to private sheet. Tabs: ' + sheets.join(', '));
-  } catch(e) {
-    Logger.log('❌ Error: ' + e.message);
-  }
-}
