@@ -146,18 +146,22 @@
     }
   </script>
   <script>
-    // Season label: hide instantly via injected style, reveal with correct text after DOM ready
     (function() {
       var s = sessionStorage.getItem('vahl_season_label');
-      if (s) {
-        // Inject a style to hide season labels before paint
-        document.write('<style>.season-label{visibility:hidden}</style>');
-        document.addEventListener('DOMContentLoaded', function() {
-          document.querySelectorAll('.season-label').forEach(function(el) {
-            el.textContent = s;
-            el.style.visibility = '';
-          });
+      if (!s) return; // No cache yet — async fetch will update after load
+      // Hide before paint so the placeholder never shows
+      document.write('<style>.season-label{visibility:hidden}</style>');
+      // Reveal with correct text as soon as DOM is ready
+      function applyLabel() {
+        document.querySelectorAll('.season-label').forEach(function(el) {
+          el.textContent = s;
+          el.style.visibility = '';
         });
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyLabel);
+      } else {
+        applyLabel();
       }
     })();
   </script>
