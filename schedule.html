@@ -50,6 +50,17 @@
       });
     }
   </script>
+  <script>
+    // Apply cached season label synchronously before first paint — no flash
+    (function() {
+      var s = sessionStorage.getItem('vahl_season_label');
+      if (s) {
+        document.addEventListener('DOMContentLoaded', function() {
+          document.querySelectorAll('.season-label').forEach(function(el) { el.textContent = s; });
+        });
+      }
+    })();
+  </script>
 </head>
 <body>
 
@@ -72,7 +83,7 @@
 
 <main class="container">
   <div class="page-header">
-    <p class="eyebrow"><span class="season-label">2026–27 Season</span></p>
+    <p class="eyebrow"><span class="season-label">VAHL Season</span></p>
     <h1 class="page-title">Schedule</h1>
     <p class="page-sub" id="schedule-sub">Loading…</p>
   </div>
@@ -92,7 +103,7 @@
   <div class="card" id="results-card"></div>
 </main>
 
-<footer class="site-footer"><div class="container">Vaughan Adult Hockey League · <span class="season-label">2026–27 Season</span></div></footer>
+<footer class="site-footer"><div class="container">Vaughan Adult Hockey League · <span class="season-label">VAHL Season</span></div></footer>
 
 <script src="js/data.js"></script>
 <script>

@@ -117,6 +117,17 @@
       .award-winner { font-size: 22px; }
     }
   </style>
+  <script>
+    // Apply cached season label synchronously before first paint — no flash
+    (function() {
+      var s = sessionStorage.getItem('vahl_season_label');
+      if (s) {
+        document.addEventListener('DOMContentLoaded', function() {
+          document.querySelectorAll('.season-label').forEach(function(el) { el.textContent = s; });
+        });
+      }
+    })();
+  </script>
 </head>
 <body>
 

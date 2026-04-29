@@ -392,6 +392,12 @@ async function loadData() {
     _miscCache = miscRaw.length ? miscRaw[0] : {};
     _rrCache   = rrRaw.length   ? rrRaw[0]   : {};
 
+    // Save season label to sessionStorage for instant application on next page load
+    const seasonLabel = (_miscCache['Current Season'] || '') + ' Season';
+    if (_miscCache['Current Season']) {
+      try { sessionStorage.setItem('vahl_season_label', seasonLabel); } catch(e) {}
+    }
+
     const skaterRoster = roster.filter(p => (p.Pos || '').toUpperCase() !== 'G');
     const goalieRoster = roster.filter(p => (p.Pos || '').toUpperCase() === 'G');
     const skaters = aggregateSkaters(skaterRoster, gameStats, schedule, 'all');
