@@ -194,10 +194,9 @@
   </style>
   <script>
     // vahl_awards_show_inline
-    // Hide Awards link immediately if not yet determined or explicitly hidden
-    // This runs synchronously before first paint — no flash in any browser
-    var _av = sessionStorage.getItem('vahl_awards_show');
-    if (_av !== '1') {
+    // Synchronously hide Awards link ONLY if explicitly set to '0'
+    // If '1' → stays visible. If null (first load) → stays visible, applyAwardsVisibility will correct if needed
+    if (sessionStorage.getItem('vahl_awards_show') === '0') {
       document.addEventListener('DOMContentLoaded', function() {
         var link = document.getElementById('awards-nav-link');
         if (link) link.style.display = 'none';
