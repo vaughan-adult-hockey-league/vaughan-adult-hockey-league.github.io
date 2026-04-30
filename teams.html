@@ -200,7 +200,7 @@ function renderTeams() {
         <a href="roster.html?team=${encodeURIComponent(t.Team)}"><img src="${teamLogo(t.Team)}" alt="${t.Team}" style="width:180px;height:180px;display:block;"/></a>
         <div style="flex:1;">
           <div class="team-card-title">${t.Team}</div>
-          <div class="team-card-record">${t.W}W · ${t.L}L · ${t.T ?? 0}T · <strong>${isPlayoff && _rrData ? (Number(_rrData[t.Team]||0)) + ' round robin pts' : t.PTS + ' pts'}</strong></div>
+          <div class="team-card-record">${t.W}W · ${t.L}L · ${t.T ?? 0}T · <strong style="white-space:nowrap;">${isPlayoff && _rrData ? (Number(_rrData[t.Team]||0)) + ' RR pts' : t.PTS + ' pts'}</strong></div>
           <div class="streak-row" style="margin-top:6px;">
             ${(() => { const s = streakDots(t.Team, _teamsData.schedule, _teamsSeason); return `${s.dots}<span style="font-size:11px;color:var(--text-muted);margin-left:4px;">Last ${s.count}</span>`; })()}
           </div>

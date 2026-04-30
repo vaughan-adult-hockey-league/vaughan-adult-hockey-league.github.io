@@ -200,6 +200,7 @@ a { color: inherit; text-decoration: none; }
   .season-toggle { flex-wrap: wrap; }
   .box-header { flex-direction: column; align-items: center; }
   .box-score { font-size: 36px; }
+  tfoot td { font-size: 14px !important; padding: 0.35rem 0.5rem !important; }
 }
 
 /* SEASON TYPE TOGGLE */

@@ -22,7 +22,7 @@ vahl/
 ├── robots.txt            ← Search engine crawl rules
 ├── sitemap.xml           ← Search engine sitemap
 ├── favicon.ico           ← Browser tab icon
-├── site.webmanifest      ← Web app manifest
+├── site.webmanifest      ← Web app manifest (PWA)
 ├── css/style.css         ← All shared styles (mobile responsive)
 ├── js/data.js            ← Google Sheets data loader and all helpers
 ├── logos/                ← Team and league logo SVGs
@@ -35,91 +35,84 @@ vahl/
 ---
 
 ## Already Configured
-- **Google Sheet ID** — set in js/data.js
-- **Apps Script URL** — set in registration.html
-- **EmailJS** — set in contact.html
-- **Live site** — https://vaughan-adult-hockey-league.github.io
+- **Google Sheet ID** — set in js/data.js (`SHEET_ID`)
+- **Apps Script URL** — set in registration.html (`APPS_SCRIPT_URL`)
+- **Private Registrations Sheet ID** — set in registration-script.gs (`PRIVATE_SHEET_ID`)
+- **EmailJS** — set in contact.html (public key, service ID, template ID)
 
 ---
 
 ## Google Sheet Structure
 
 ### Required tabs (exact names):
-- Roster
-- GoalieRoster
-- GameStats
-- GoalieStats
-- Schedule
-- Registration
-- Round Robin
-- Misc
-- Registrations (auto-created by Apps Script on first submission)
+| Tab | Purpose |
+|-----|---------|
+| Roster | All players including goalies (Pos = G) |
+| GameStats | Per-game player stats including goalies |
+| Schedule | Full season schedule and results |
+| Registration | Registration window dates |
+| Round Robin | Playoff round robin points per team |
+| Misc | Season label, champion, announcement, image settings |
 
----
-
-### Misc tab
-Headers in row 1, values in row 2:
-
-| Current Season | Champion | Announcement | Image | Font Size | Align |
-|---|---|---|---|---|---|
-| 2025-26 | Los Angeles | Welcome to the 2025-26 VAHL season! | 2025-26_Champions.jpeg | 15 | left |
-
-- **Current Season** — season label shown throughout the site
-- **Champion** — team name for the VAHL Champions playoff award
-- **Announcement** — text on the Home page. Use `\n` for line breaks. Leave blank for none
-- **Image** — filename from the `images/` folder shown below the announcement. Leave blank for none
-- **Font Size** — font size in pixels (default: 15)
-- **Align** — `left`, `center`, or `right` (default: left)
+**Removed tabs (no longer needed):**
+- ~~GoalieRoster~~ — goalies now in Roster tab with Pos = G
+- ~~GoalieStats~~ — goalie W/L/T/GA/SO/GAA derived from Schedule scores
 
 ---
 
 ### Roster tab
+All players in one tab — skaters and goalies together.
+
 | Name | Team | Jersey | Pos |
 |------|------|--------|-----|
-| J. Mitchell | Toronto | 19 | F |
+| Darren Desrosiers | Toronto | 10 | F |
+| Joe Muraca | Toronto | 4 | D |
+| Nello Deluca | Toronto | 1 | G |
+| Rental | Philadelphia | – | G |
 
-Pos values: F (Forward) or D (Defence)
+**Pos values:** `F` (forward), `D` (defence), `G` (goalie)
 
----
-
-### GoalieRoster tab
-| Name | Team | Jersey |
-|------|------|--------|
-| Nello Deluca | Toronto | 1 |
+**Rental goalies:** Any player whose name contains "Rental" (case-insensitive) is treated as a rental goalie:
+- Excluded from: skater tables, stats leaderboard, player profiles
+- Included in: Goaltenders tables (Roster page), Boxscore, team-filtered Stats goalie view
+- Always sorted last in Goaltenders tables
 
 ---
 
 ### GameStats tab
-| Date | Player | Team | Jersey | G | A | PIM |
-|------|--------|------|--------|---|---|-----|
-| Oct 5, 2025 | J. Mitchell | Toronto | 19 | 2 | 1 | 0 |
+One row per player per game. Goalies can be included here too.
 
-- Jersey is optional
-- Date must match Schedule tab exactly
+| Date | Player | Team | Jersey | Pos | G | A | PIM |
+|------|--------|------|--------|-----|---|---|-----|
+| Oct 5, 2025 | Darren Desrosiers | Toronto | 10 | F | 2 | 1 | 0 |
+| Oct 5, 2025 | Nello Deluca | Toronto | 1 | G | 0 | 0 | 0 |
+| Oct 5, 2025 | Rental | Philadelphia | – | G | 0 | 0 | 0 |
 
----
+**Key rules:**
+- Date must match Schedule tab exactly (e.g. `Oct 5, 2025`)
+- Player name must match Roster tab exactly
+- Jersey is optional (for reference only)
+- Pos can be left blank for skaters — only `G` matters for goalie game assignment
+- G/A/PIM default to 0 if blank
+- You can add extra columns (e.g. Notes) to the right — they are ignored
+- **Goalie assignment:** The goalie with `Pos = G` for a given date/team gets that game's W/L/T/GA/SO. If no Pos=G row exists, the primary (first listed) goalie for that team in the Roster tab is used
 
-### GoalieStats tab
-| Date | Team | Goalie | Jersey | W | L | T | GA | SO | PIM |
-|------|------|--------|--------|---|---|---|----|----|-----|
-| Oct 5, 2025 | Toronto | Nello Deluca | 1 | 1 | 0 | 0 | 2 | 0 | 0 |
-
-- Jersey is optional
-- Date must match Schedule tab exactly
+**Multiple goalies per team:** If a backup goalie plays, add their row with `Pos = G` for that game. The primary goalie row can be left without `Pos = G` or omitted entirely for that game.
 
 ---
 
 ### Schedule tab
 | Date | Time | Home | Away | HomeScore | AwayScore | Status | Playoff |
 |------|------|------|------|-----------|-----------|--------|---------|
-| Oct 5, 2025 | 6:00 PM | Dallas | Toronto | 3 | 5 | Final | 0 |
+| Oct 5, 2025 | 6:00 PM | Dallas | Toronto | 3 | 7 | Final | |
 | Apr 15, 2026 | 6:00 PM | Toronto | Dallas | 4 | 2 | Final | 1 |
 | May 1, 2026 | 6:00 PM | Toronto | Dallas | | | Upcoming | 1 |
 
-- Status: `Final`, `Tie`, or `Upcoming`
-- Playoff: `1` = playoff game, `0` or blank = regular season
-- Leave scores blank for upcoming games
-- Time column: use "6:00 PM" format (not a date cell — plain text)
+**Key rules:**
+- Status: `Final` or `Upcoming` (no need for `Tie` — ties detected automatically when HomeScore = AwayScore)
+- Playoff: `1` = playoff game, blank = regular season (no need to enter 0)
+- Leave HomeScore/AwayScore blank for upcoming games
+- Time column: plain text (e.g. `6:00 PM`), not a date cell
 
 ---
 
@@ -129,7 +122,7 @@ Pos values: F (Forward) or D (Defence)
 | StartDate | 2026-09-01 |
 | EndDate | 2026-10-15 |
 
-Use YYYY-MM-DD format. The form opens automatically within this window.
+Use YYYY-MM-DD format. The registration form opens automatically within this window.
 
 ---
 
@@ -140,33 +133,91 @@ One column per team, header = team name, value = round robin points:
 |---------|-------------|-------------|--------|
 | 5.5 | 7.5 | 14.5 | 5 |
 
-Used in the Playoffs standings view (RRPTS column) on the Home page.
+Used in Playoffs standings view and Prince of Wales Trophy award.
 
 ---
 
-## Updating Stats Week to Week
-After each game:
-1. **Schedule tab** — change Status to Final or Tie, add scores
-2. **GameStats tab** — add one row per skater with G, A, PIM
-3. **GoalieStats tab** — add one row per goalie with W/L/T, GA, SO, PIM
+### Misc tab
+Headers in row 1, values in row 2:
+
+| Current Season | Champion | Announcement | Image | Font Size | Align |
+|---|---|---|---|---|---|
+| 2025-26 | Los Angeles | 🏆 LA are your champions! | 2025-26_Champions.jpeg | 18 | center |
+
+- **Current Season** — season label shown throughout the site
+- **Champion** — team name for the VAHL Champions playoff award
+- **Announcement** — text shown on the Home page. Use `\n` for line breaks. Leave blank for none
+- **Image** — filename from the `images/` folder shown below the announcement. Leave blank for none
+- **Font Size** — font size in pixels for announcement text (default: 15)
+- **Align** — `left`, `center`, or `right` (default: left)
+
+---
+
+## Goalie Stats — How They Work
+
+Goalie W/L/T/GA/SO/GAA are **derived automatically from the Schedule tab** — you never need to enter them manually. The Schedule scores are the source of truth:
+
+- **W/L/T** — compared from HomeScore vs AwayScore per game
+- **GA** — the opposing team's score
+- **SO** — shutout when opposing team scored 0
+- **GAA** — total GA ÷ games played
+- **PIM** — read from GameStats rows where `Pos = G`
+
+Ties are detected when HomeScore = AwayScore, regardless of Status field.
+
+---
+
+## Updating Stats After Each Game
+1. **Schedule tab** — change Status to `Final`, add scores
+2. **GameStats tab** — add one row per player (including goalie if tracking PIM or rare G/A)
+
+That's it — goalie W/L/T/GA/SO are calculated automatically.
 
 ---
 
 ## Awards Page
-The 🏆 Awards nav link appears automatically when all regular season games are played and disappears when registration opens.
 
-**Regular Season Awards:**
+The 🏆 Awards nav link appears automatically between Stats and Handouts when all regular season games are played, and disappears when registration opens.
+
+**Regular Season Awards** (when all regular season games are Final):
 1. 🏆 President's Trophy — 1st place team
 2. 🎯 Rocket Richard Trophy — Most goals (tiebreaker: fewest PIM)
 3. 📊 Art Ross Trophy — Most points (tiebreaker: most goals → fewest PIM)
 4. 🛡️ Norris Trophy — Defenceman with most points (same tiebreakers)
-5. 🥅 Vezina Trophy — Lowest GAA (tiebreakers: W → SO → fewest PIM)
+5. 🥅 Vezina Trophy — Lowest GAA, min 12 GP (tiebreakers: W → SO → fewest PIM). GAA compared to 2 decimal places to avoid float precision issues.
 6. 🤝 Lady Byng Trophy — All players with 0 PIM
 
-**Playoff Awards** (shown after all playoff games played):
+**Playoff Awards** (when all playoff games are Final):
 1. 🏒 VAHL Champions — from Misc tab Champion column
 2. 🌟 Conn Smythe Trophy — Most playoff points (tiebreaker: most goals → fewest PIM)
 3. 👑 Prince of Wales Trophy — Top Round Robin team
+
+All trophy ties are shared if still equal after all tiebreakers.
+
+---
+
+## Privacy & Security
+- **Registration data** goes to a separate private Google Sheet (`PRIVATE_SHEET_ID` in Apps Script) that is never published to the web
+- **Honeypot fields** on both registration and contact forms catch and silently reject spam bots
+- **Privacy notice** shown to players on the registration form
+- **Google Sheets gviz endpoint** is read-only — no API key required, works as long as the main Sheet is published to the web
+
+---
+
+## Performance
+All Google Sheet data (Roster, GameStats, Schedule, Misc, Round Robin) is fetched in a single parallel batch on first page load and cached in `sessionStorage` for 5 minutes. Subsequent page navigations within the same session are instant — no network requests. Season label and Awards button visibility are also cached and applied synchronously before first paint to avoid any flash.
+
+---
+
+## Stats Page Sort Tiebreakers
+**Skaters:**
+- PTS sort: most goals → fewest PIM
+- G sort: fewest PIM
+- A sort: fewest PIM
+
+**Goalies:**
+- Default/GAA sort: lowest GAA (to 2dp) → most W → most SO → fewest PIM
+- Other columns: tiebreaker falls back to lowest GAA
 
 ---
 
@@ -175,85 +226,74 @@ Place announcement or feature images here. Reference the filename in the Misc ta
 
 ---
 
-## Regular Season / Playoffs / Combined Toggles
-All stat pages (Home, Teams, Stats, Roster, Player, Awards) have a Regular Season / Playoffs toggle. Stats and Roster pages also have Combined. The Playoff column in the Schedule tab determines which games count in each view.
-
----
-
 ## Page Summary
 | Page | File | Description |
 |------|------|-------------|
-| Home | index.html | Standings, results, leaders, announcement |
-| Teams | teams.html | Team cards, H2H records, streak dots |
-| Roster | roster.html | Skater and goalie rosters with stats |
-| Player Profile | player.html | Per-player game log |
+| Home | index.html | Standings, results, leaders, announcement banner |
+| Teams | teams.html | Team cards, H2H records, streak dots, RR pts in playoffs |
+| Roster | roster.html | Skater and goalie tables with stats per team |
+| Player Profile | player.html | Per-player game log and career stats |
 | Schedule | schedule.html | Full schedule, results, clickable boxscores |
-| Stats | stats.html | League-wide leaderboards |
-| Awards | awards.html | Season and playoff awards |
-| Handouts | handouts.html | PDF documents |
+| Stats | stats.html | League-wide leaderboards, team filter with totals row |
+| Awards | awards.html | Season and playoff awards, auto-calculated |
+| Handouts | handouts.html | PDF documents for download |
 | Registration | registration.html | Date-gated registration form |
 | Contact | contact.html | Contact form and rink info |
-| Boxscore | boxscore.html | Full game stats |
+| Boxscore | boxscore.html | Full game stats — skaters and goalies |
 
 ---
 
-## Setup Steps (for reference / future reinstall)
+## Setup Steps (for future reinstall)
 
-### Step 2 — Publish Your Google Sheet
-1. File > Share > Publish to web
+### Step 1 — Publish Your Google Sheet
+1. File → Share → Publish to web
 2. Select Entire Document, Web page format
 3. Click Publish
-4. Copy the Sheet ID from the URL between /d/ and /edit
+4. **Do NOT publish the separate Registrations sheet** — keep that private
 
-### Step 3 — Add Sheet ID to the Website
-Open js/data.js and update:
-```
+### Step 2 — Add Sheet ID to the Website
+Open `js/data.js` and update:
+```javascript
 const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID_HERE';
 ```
 
-### Step 4 — Deploy the Registration Apps Script
-1. Open the Google Sheet → Extensions > Apps Script
-2. Paste the contents of registration-script.gs
-3. Deploy > New Deployment > Web App
-4. Execute as: Me, Who has access: Anyone
-5. Copy the Web App URL into registration.html
+### Step 3 — Set Up the Registration Apps Script
+1. Open your main VAHL Google Sheet → Extensions → Apps Script
+2. Paste `registration-script.gs` contents
+3. Set `PRIVATE_SHEET_ID` to your private Registrations Sheet ID
+4. Deploy → New Deployment → Web App (Execute as: Me, Anyone can access)
+5. Paste the Web App URL into `registration.html` as `APPS_SCRIPT_URL`
 
-### Step 5 — Set Up EmailJS
-Open contact.html and update:
+### Step 4 — Set Up EmailJS (Contact Form)
+Update `contact.html`:
+```javascript
+const EMAILJS_PUBLIC_KEY  = 'your_key';
+const EMAILJS_SERVICE_ID  = 'your_service';
+const EMAILJS_TEMPLATE_ID = 'your_template';
 ```
-const EMAILJS_PUBLIC_KEY  = '...';
-const EMAILJS_SERVICE_ID  = '...';
-const EMAILJS_TEMPLATE_ID = '...';
-```
+Add your domain to the allowed domains list in your EmailJS dashboard.
 
-### Step 6 — PDF Handouts
-Place PDF files in handouts/ with these filenames:
-- vahl-welcome.pdf
-- vahl-rules.pdf
-- vahl-waiver.pdf
+### Step 5 — PDF Handouts
+Place PDF files in `handouts/` folder and update `handouts.html` to reference them.
 
-### Step 7 — Host the Site
-Upload all files to GitHub Pages or your web server.
+### Step 6 — Host on GitHub Pages
+Upload all files to your GitHub repository. The site is configured for:
+`https://vaughan-adult-hockey-league.github.io`
 
 ---
 
 ## Team Colours
-| Team | Primary | Accent | Background |
-|------|---------|--------|------------|
-| Toronto | #2563eb | #60a5fa | #1e3a8a |
-| Philadelphia | #ea580c | #fb923c | #7c2d12 |
-| Los Angeles | #9ca3af | #d1d5db | #1f2937 |
-| Dallas | #4ade80 | #86efac | #14532d |
+| Team | Primary | Light | Muted |
+|------|---------|-------|-------|
+| Toronto | #2563eb | #dbeafe | #60a5fa |
+| Philadelphia | #ea580c | #ffedd5 | #fb923c |
+| Los Angeles | #9ca3af | #f3f4f6 | #d1d5db |
+| Dallas | #4ade80 | #dcfce7 | #86efac |
 
 ---
 
-## Tips & Notes
-- Team names must match exactly across all tabs
-- Player names in GameStats must match Roster tab exactly
-- Dates in GameStats/GoalieStats must match Schedule Date exactly
-- Column order in any tab does not matter — read by header name
-- Time column in Schedule should be plain text (e.g. "6:00 PM"), not a date cell
-- Game nights: Sundays, 6:00 PM – 8:00 PM
-- Rink: Sports Village, 2600 Rutherford Road, Vaughan ON L4K 5R1
-- League email: communication.vahl@gmail.com
-- Payment email: payment.vahl@gmail.com
+## League Info
+- **Game nights:** Sundays, 6:00 PM – 8:00 PM
+- **Rink:** Sports Village, 2600 Rutherford Road, Vaughan ON L4K 5R1
+- **League email:** communication.vahl@gmail.com
+- **Payment email:** payment.vahl@gmail.com
