@@ -442,6 +442,7 @@ async function buildPlayoffAwards(data, rrData) {
 async function init() {
   try {
     const data = await loadData();
+  applyAwardsVisibility(data);
   const rrData = data.roundRobin || {};
     _awardsData = data;
 

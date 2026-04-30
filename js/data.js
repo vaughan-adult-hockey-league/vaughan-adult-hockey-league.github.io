@@ -432,6 +432,30 @@ async function loadData() {
 }
 
 // ── Registration window ────────────────────────────────────────
+
+// ── Awards nav visibility ──────────────────────────────────────
+// Called from each page's init() after loadData() — no race conditions
+async function applyAwardsVisibility(data) {
+  try {
+    const link = document.getElementById('awards-nav-link');
+    if (!link) return;
+    const cached = sessionStorage.getItem('vahl_awards_show');
+    if (cached !== null) {
+      if (cached !== '1') link.style.display = 'none';
+      return;
+    }
+    const regWin = await fetchRegistrationWindow();
+    const today = new Date(); today.setHours(0,0,0,0);
+    const regStart = regWin && regWin.StartDate ? new Date(regWin.StartDate + 'T00:00:00') : null;
+    const regOpen = regStart && today >= regStart;
+    const regularGames = (data.schedule||[]).filter(g => Number(g.Playoff||0) === 0);
+    const regularDone = regularGames.length > 0 && regularGames.every(g => g.Status !== 'Upcoming');
+    const show = regularDone && !regOpen;
+    sessionStorage.setItem('vahl_awards_show', show ? '1' : '0');
+    if (!show) link.style.display = 'none';
+  } catch(e) {}
+}
+
 let _regCache = null;
 async function fetchRegistrationWindow() {
   if (_regCache) return _regCache;

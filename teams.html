@@ -230,6 +230,7 @@ function renderTeams() {
 
 async function init() {
   const data = await loadData();
+  applyAwardsVisibility(data);
   _teamsData = data;
   _rrData = data.roundRobin || {};
   renderTeams();
@@ -242,28 +243,6 @@ init();
     document.querySelectorAll('.season-label').forEach(el => el.textContent = label);
   });
 
-  // Awards nav visibility — start visible, hide if not earned
-  (async () => {
-    try {
-      const link = document.getElementById('awards-nav-link');
-      if (!link) return;
-      const cached = sessionStorage.getItem('vahl_awards_show');
-      if (cached !== null) {
-        if (cached !== '1') link.style.display = 'none';
-        return;
-      }
-      const data = await loadData();
-      const regWin = await fetchRegistrationWindow();
-      const today = new Date(); today.setHours(0,0,0,0);
-      const regStart = regWin && regWin.StartDate ? new Date(regWin.StartDate + 'T00:00:00') : null;
-      const regOpen = regStart && today >= regStart;
-      const regularGames = (data.schedule||[]).filter(g => Number(g.Playoff||0) === 0);
-      const regularDone = regularGames.length > 0 && regularGames.every(g => g.Status !== 'Upcoming');
-      const show = regularDone && !regOpen;
-      sessionStorage.setItem('vahl_awards_show', show ? '1' : '0');
-      if (!show) link.style.display = 'none';
-    } catch(e) {}
-  })();
 </script>
 </body>
 </html>
