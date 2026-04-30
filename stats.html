@@ -333,21 +333,9 @@ window.switchTab = function(tab) {
   document.getElementById('goalies-section').style.display = tab==='goalies' ? '' : 'none';
   document.getElementById('tab-skaters').classList.toggle('active', tab==='skaters');
   document.getElementById('tab-goalies').classList.toggle('active', tab==='goalies');
-
-  // Sync the team filter across tabs
-  if (tab === 'skaters' && goalieFilter !== skaterFilter) {
-    skaterFilter = goalieFilter;
-    document.querySelectorAll('#skater-filters .f-btn').forEach(b =>
-      b.classList.toggle('active', b.textContent.trim() === (skaterFilter==='All'?'All teams':skaterFilter))
-    );
-    renderSkaters();
-  } else if (tab === 'goalies' && skaterFilter !== goalieFilter) {
-    goalieFilter = skaterFilter;
-    document.querySelectorAll('#goalie-filters .f-btn').forEach(b =>
-      b.classList.toggle('active', b.textContent.trim() === (goalieFilter==='All'?'All teams':goalieFilter))
-    );
-    renderGoalies();
-  }
+  // Always re-render the tab being switched to so filter is current
+  if (tab === 'skaters') renderSkaters();
+  else renderGoalies();
 };
 
 window.setSkaterFilter = function(team) {
