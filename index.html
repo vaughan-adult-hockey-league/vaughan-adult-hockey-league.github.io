@@ -259,7 +259,11 @@ function renderHomeLeaders() {
   const { roster, gameStats, schedule } = _homeData;
   const skaterRoster = (roster||[]).filter(p => (p.Pos||"").toUpperCase() !== "G");
   const skaters = aggregateSkaters(skaterRoster, gameStats, schedule, _homeSeason);
-  const topSkaters = [...skaters].sort((a,b) => b.PTS - a.PTS).slice(0,5);
+  const topSkaters = [...skaters].sort((a,b) => {
+    if (Number(b.PTS||0) !== Number(a.PTS||0)) return Number(b.PTS||0) - Number(a.PTS||0);
+    if (Number(b.G||0) !== Number(a.G||0)) return Number(b.G||0) - Number(a.G||0);
+    return Number(a.PIM||0) - Number(b.PIM||0);
+  }).slice(0,5);
   document.getElementById('leaders-body').innerHTML = topSkaters.map((p,i) => `
     <tr style="${i%2===1?'background:var(--bg);':''}">
       <td class="left" style="padding-top:0.3rem;padding-bottom:0.3rem;"><span class="${i===0?'rank-1':'rank-num'}">${i+1}</span></td>
